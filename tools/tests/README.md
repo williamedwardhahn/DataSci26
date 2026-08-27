@@ -19,18 +19,24 @@ Seven suites. Run them all:
 
 ## Environment for the execution suite
 
-The labs target Colab. To run them off-Colab you need the scientific stack plus
-a stub for `google.colab`, which `mpcr` imports at module level:
+The labs are self-contained — no course package, nothing to install from GitHub —
+so the test environment is just the scientific stack:
 
 ```bash
 uv venv --python 3.12 testenv
-VIRTUAL_ENV=testenv uv pip install numpy matplotlib torch torchvision scikit-image \
-  imageio scipy pandas pillow seaborn nbformat nbclient ipykernel requests \
-  torchsummary scikit-learn opencv-python-headless nltk wget barbar flashtorch pip
-VIRTUAL_ENV=testenv uv pip install "git+https://github.com/williamedwardhahn/mpcr"
+VIRTUAL_ENV=testenv uv pip install numpy pandas matplotlib scipy sympy requests \
+  torch torchvision scikit-image imageio pillow \
+  nbformat nbclient ipykernel wandb
 testenv/bin/python -m ipykernel install --user --name python3
 
-# mpcr does `from google.colab import drive` at import time
+./tools/tests/run_all.sh testenv/bin/python
+```
+
+Cells that call `drive.mount` or `files.upload` raise `ModuleNotFoundError` off-Colab;
+the harness classifies those as `colab-only` rather than failures. If you would rather
+they fail cleanly, drop a stub on the path:
+
+```bash
 SITE=$(testenv/bin/python -c "import site;print(site.getsitepackages()[0])")
 mkdir -p "$SITE/google/colab" && touch "$SITE/google/__init__.py"
 cat > "$SITE/google/colab/__init__.py" <<'EOF'
@@ -42,12 +48,7 @@ class _F:
     def download(self, *a, **k): raise RuntimeError("Colab-only")
 files = _F()
 EOF
-
-./tools/tests/run_all.sh testenv/bin/python
 ```
-
-`pip` is required in the venv because `mpcr` shells out to
-`python -m pip install` for `flashtorch`, `barbar`, and `wandb` at import time.
 
 ## Reading the execution results
 
@@ -55,7 +56,7 @@ Only `BUG` counts as a failure. The other categories are cells that cannot work
 outside Colab or off a GPU and are expected to fail locally:
 
 - **`colab-only`** — Drive mount, `files.upload`, `apt-get`, webcam capture, `wandb.login`
-- **`gpu-only`** — `mpcr`'s `GPU()`/`GPU_data()` build tensors on `device='cuda'` unconditionally,
-  so labs 10, 11, 13, and 14 need a GPU runtime
+- **`gpu-only`** — a cell that genuinely needs CUDA (for example loading a checkpoint that was
+  serialized from a GPU tensor). The labs themselves are device-agnostic
 - **`network`** — transient fetch failures
 - **`needs-stdin`** — cells that call `input()`

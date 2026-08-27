@@ -31,6 +31,10 @@ RULES = [
      'a = np.zeros((5, 5))                       # kernel must match the 5x5 block size\n'
      'a[1:4, 1:4] = [[1, 2, 1], [0, 0, 0], [-1, -2, -1]]   # 3x3 Sobel, zero-padded',
      'kernel padded to block size'),
+    # Several archived cells redefine GPU()/GPU_data() with a hardcoded CUDA device,
+    # shadowing the device-aware versions from the setup cell. Honour `device` instead.
+    (r"device\s*=\s*torch\.device\(\s*['\"]cuda['\"]\s*\)", 'device=device',
+     'hardcoded cuda device -> active device'),
     # skimage dropped `multichannel=` in 0.19 in favour of `channel_axis=`
     (r'multichannel\s*=\s*True', 'channel_axis=-1', 'skimage multichannel -> channel_axis'),
     # imageio/skimage now return an animated GIF as a (frames, H, W, C) stack, so the
@@ -59,6 +63,12 @@ REWRITE = [
     ('z=blocks_vec*a1',
      'z = (blocks_vec * a1).sum(axis=2)          # dot product of each block with the kernel',
      'block dot product now reduces'),
+    # This annealing variant of the random walk has its three initialisers commented
+    # out -- it relied on w*_best still being in memory from the previous cell's run.
+    # Top to bottom it raises NameError, so restore them.
+    ('# w0_best = 0\n# w1_best = 0\n# w2_best = 0',
+     'w0_best = 0\nw1_best = 0\nw2_best = 0',
+     'restored commented-out initialisers'),
     # the source has this import commented out, so view_as_windows is never defined
     ('blocks = view_as_windows(image, block_shape)',
      'from skimage.util import view_as_windows\n'
@@ -74,6 +84,27 @@ REWRITE = [
 # break a top-to-bottom run. (lab prefix, exact source, name that must not be bound yet)
 DROP_UNBOUND = [
     ('lab12', 'l.shape', 'l'),
+]
+
+# Lab-scoped rules: (lab prefix, regex, replacement, label)
+LAB_RULES = [
+    # lab11's random-search loops run up to 10,000,000 iterations, and each one is a
+    # matmul over all 60,000 MNIST images. They never ran before -- GPU_data() raised
+    # first -- so nobody noticed. Capped at a size that finishes; the lesson is the
+    # shape of the curve, not the iteration count. Raise them if you have the time.
+    ('lab11', r'range\((?:100000|1000000|10000000)\)', 'range(10000)',
+     'capped a search loop that cannot finish'),
+]
+
+# Rules that only apply after a given cell. Live-coding notebooks change the shape of
+# a variable partway through and the cells above never get updated.
+# (lab prefix, anchor regex, regex, replacement, label)
+AFTER_RULES = [
+    # lab11 concatenates a bias row onto X, making it 785 rows. Every weight matrix
+    # built after that is still hardcoded to 784 and the matmul fails. Derive the
+    # width from X instead, which is right on both sides of the bias cell.
+    ('lab11', r'X\s*=\s*torch\.concatenate\(\[bias\s*,\s*X\]\)',
+     r'\b784\b', 'X.shape[0]', 'weight width derived from X, not hardcoded 784'),
 ]
 
 IMPORT_FIX = ('from torchvision.models import alexnet',
@@ -118,6 +149,35 @@ def main():
         nb = json.load(open(p))
         base = os.path.basename(p)
         touched = []
+
+        for prefix, anchor, rx, rep, label in AFTER_RULES:
+            if not base.startswith(prefix):
+                continue
+            start = None
+            for i, c in enumerate(nb['cells']):
+                if c['cell_type'] == 'code' and re.search(anchor, ''.join(c['source'])):
+                    start = i
+                    break
+            if start is None:
+                continue
+            for i, c in enumerate(nb['cells'][start + 1:], start=start + 1):
+                if c['cell_type'] != 'code':
+                    continue
+                new, n = re.subn(rx, rep, ''.join(c['source']))
+                if n:
+                    c['source'] = new.splitlines(keepends=True)
+                    touched.append((i, [(label, n)]))
+
+        for prefix, rx, rep, label in LAB_RULES:
+            if not base.startswith(prefix):
+                continue
+            for i, c in enumerate(nb['cells']):
+                if c['cell_type'] != 'code':
+                    continue
+                new, n = re.subn(rx, rep, ''.join(c['source']))
+                if n:
+                    c['source'] = new.splitlines(keepends=True)
+                    touched.append((i, [(label, n)]))
 
         # drop live-coding leftovers that reference a name nothing has bound yet
         for prefix, exact, name in DROP_UNBOUND:

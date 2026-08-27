@@ -37,8 +37,10 @@ import sys, os, json
 sys.path.insert(0, 'tools')
 from labs_plan import PLAN
 bad = 0
-for w, slug, *_rest in PLAN:
-    for path, a, b in _rest[-1]:
+for entry in PLAN:
+    w, slug = entry[0], entry[1]
+    sources = entry[7]          # (week, slug, title, blurb, objectives, interactive, homework, sources[, extra])
+    for path, a, b in sources:
         p = os.path.join('_source', 'notebooks', path)
         if not os.path.exists(p):
             print(f'    FAIL  lab{w:02d}: missing source {path}'); bad += 1; continue

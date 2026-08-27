@@ -14,8 +14,9 @@ Everything runs in a browser. There is nothing to install.
 ## Start here
 
 1. **[Setup guide](setup/)** — Colab, GitHub, and an AI assistant. Do this before Week 2.
-2. **[Lab 01](labs/lab01_python-and-colab.ipynb)** — open it in Colab and start running cells.
-3. **[Final project](project/)** — read it now. You pick your problem in Week 8.
+2. **[Working with Google Drive](setup/drive.md)** — how to get your own data into Colab and your trained models back out. Needed from Week 13.
+3. **[Lab 01](labs/lab01_python-and-colab.ipynb)** — open it in Colab and start running cells.
+4. **[Final project](project/)** — read it now. You pick your problem in Week 8.
 
 ---
 
@@ -39,7 +40,8 @@ Everything runs in a browser. There is nothing to install.
 | 14 | [14](labs/lab14_autoencoders-and-generative.ipynb) | Autoencoders & generative models ◦ | | **D4 — poster** |
 | 15 | — | Project talks | | **D5 — talk** |
 
-◦ = needs a GPU runtime (*Runtime → Change runtime type → T4 GPU*); every other lab runs on CPU.
+◦ = **use a GPU runtime** (*Runtime → Change runtime type → T4 GPU*). Labs 10, 13 and 14 merely
+run faster on one; Lab 11 searches over the whole MNIST matrix and is impractical without it.
 
 The arc: **weeks 1–6** build the probability and simulation foundation · **weeks 7–8** establish
 that images are just arrays · **weeks 9–11** fit models to data, by hand and then by gradient
@@ -60,6 +62,10 @@ the thing the notebook is computing. Use them when a concept will not sit still.
 
 **Project.** Five deliverables from Week 8 on. See [`project/`](project/).
 
+**No libraries to install.** Each lab opens with one setup cell that imports the
+scientific stack and defines the few helpers the course uses. There is no course
+package to install and nothing to keep in sync — a lab is a single self-contained file.
+
 **AI assistants** are allowed everywhere, including on work you submit — with one condition: you
 can explain every line you hand in. See the [setup guide](setup/) for the full policy.
 
@@ -71,7 +77,7 @@ can explain every line you hand in. See the [setup guide](setup/) for the full p
 labs/          14 week-by-week Colab notebooks
 interactive/   9 self-contained browser labs + index
 project/       final project specification
-setup/         tool setup guide
+setup/         tool setup guide + the Google Drive guide
 tools/         the build scripts that assemble labs/ from _source/
 _source/       archive of six years of prior course material — see _source/INDEX.md
 ```

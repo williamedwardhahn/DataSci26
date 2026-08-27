@@ -1,6 +1,126 @@
 """Week-by-week composition plan: each lab is assembled from sections of the archived notebooks."""
 
-# (week, slug, title, blurb, objectives[], interactive[], homework[], sources[(path, start, end)])
+# (week, slug, title, blurb, objectives[], interactive[], homework[],
+#  sources[(path, start, end)], extra[(kind, text)])
+
+ALEXNET_TRANSFER = [
+ ('md', """---
+
+## Transfer learning: retrain AlexNet on your own images
+
+Everything above inspects a network that already works. Now we point it at a problem
+it has never seen.
+
+We use the classic ants-vs-bees set — 245 training photos, 153 for validation. Small
+enough to train on a CPU runtime, hard enough to be interesting.
+
+Swap in your own folder and nothing else changes. **The folder names are the class
+labels:**
+
+```
+mydata/
+├── train/burnt/ ...   train/good/ ...
+└── val/burnt/   ...   val/good/  ...
+```
+
+See [`../setup/drive.md`](../setup/drive.md) for getting your own data in from Drive."""),
+
+ ('code', """import os, urllib.request, zipfile
+
+if not os.path.isdir('hymenoptera_data'):
+    urllib.request.urlretrieve(
+        'https://download.pytorch.org/tutorial/hymenoptera_data.zip', 'hym.zip')
+    zipfile.ZipFile('hym.zip').extractall('.')
+
+DATA = 'hymenoptera_data'          # <- point this at your own folder in Drive"""),
+
+ ('code', """from torch.utils.data import DataLoader
+
+train_tf = transforms.Compose([
+    transforms.Resize((224, 224)),           # AlexNet's input size
+    transforms.RandomHorizontalFlip(),       # augmentation: training only
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+val_tf = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+train_set = datasets.ImageFolder(f'{DATA}/train', transform=train_tf)
+val_set   = datasets.ImageFolder(f'{DATA}/val',   transform=val_tf)
+
+train_loader = DataLoader(train_set, batch_size=16, shuffle=True)
+val_loader   = DataLoader(val_set,   batch_size=16)"""),
+
+ ('code', """# Always check this before training. If the classes are wrong, everything after is wrong.
+print(train_set.classes)
+print(train_set.class_to_idx)
+print(len(train_set), 'train /', len(val_set), 'val')"""),
+
+ ('code', """images, targets = next(iter(train_loader))
+print(images.shape)                          # (batch, 3, 224, 224)
+plot(montage(images[:9, 0, :, :].numpy()))   # `plot` is defined earlier in this lab"""),
+
+ ('md', """Those normalization numbers are the ImageNet statistics AlexNet was trained on. Use
+them whenever you start from pretrained weights.
+
+AlexNet ends in a 1000-way layer, one output per ImageNet class. Replace that last
+layer with one that has an output per class of *yours*. Everything before it — the
+filters and feature maps you just visualised — is kept."""),
+
+ ('code', """net = alexnet(weights=AlexNet_Weights.DEFAULT)
+net.classifier[6] = nn.Linear(4096, len(train_set.classes))
+net = net.to(device)
+net.classifier"""),
+
+ ('code', """# Freeze the learned features; train only the new head.
+for p in net.features.parameters():
+    p.requires_grad = False
+
+optimizer = torch.optim.Adam(net.classifier.parameters(), lr=1e-4)
+loss_fn = nn.CrossEntropyLoss()"""),
+
+ ('code', """for epoch in range(3):
+    net.train()
+    total = 0.0
+    for x, t in train_loader:
+        x, t = x.to(device), t.to(device)
+        optimizer.zero_grad()
+        loss = loss_fn(net(x), t)
+        loss.backward()
+        optimizer.step()
+        total += loss.item()
+    print(f'epoch {epoch}  loss {total/len(train_loader):.4f}')"""),
+
+ ('code', """net.eval()
+correct = n = 0
+with torch.no_grad():
+    for x, t in val_loader:
+        x, t = x.to(device), t.to(device)
+        correct += (net(x).argmax(1) == t).sum().item()
+        n += t.shape[0]
+print(f'validation accuracy: {correct}/{n} = {correct/n:.1%}')"""),
+
+ ('md', """Three epochs on a frozen backbone should land in the 90s. ImageNet contains neither
+of these classes — what you retrained is one 4096-to-2 layer sitting on features that
+already knew what edges and texture are.
+
+Save the weights so a new session can pick them up (see `drive.md` §6)."""),
+
+ ('code', """torch.save(net.state_dict(), 'alexnet_antsbees.pt')
+
+# reload into a fresh model
+net2 = alexnet()
+net2.classifier[6] = nn.Linear(4096, len(train_set.classes))
+net2.load_state_dict(torch.load('alexnet_antsbees.pt', weights_only=True))
+net2.eval()
+print('reloaded')"""),
+]
+
+
 PLAN = [
  (1, "python-and-colab", "Python, Colab & Your Toolchain",
   "Everything runs in the browser. By the end of today you can compute, name things, make a vector, and draw a graph.",
@@ -111,7 +231,7 @@ PLAN = [
   [("MathDataSci/MNIST_Linear__1MEC07x5.ipynb", 15, 136)]),
 
  (11, "mnist-linear-classifier", "MNIST & Linear Classifiers",
-  "Ten thousand handwritten digits, and a classifier with no hidden layers that still gets most of them right.",
+  "Ten thousand handwritten digits, and a classifier with no hidden layers that still gets most of them right. The search loops here are capped so the lab finishes — raise them and watch what changes.",
   ["Load MNIST and display a montage",
    "Build a linear classifier from a single matrix multiply",
    "Understand the role of the bias term",
@@ -140,8 +260,13 @@ PLAN = [
   ["../interactive/alexnet.html"],
   ["Assemble a two-class image dataset of your own (30+ images per class) and retrain AlexNet on it.",
    "Report accuracy and show the feature maps for one correct and one incorrect prediction."],
-  [("MathData24/Feature_Maps__1GayNzpg.ipynb", 0, 117),
-   ("MathDataSci_Fall23/Alexnet__1onlVrce.ipynb", 23, 76)]),
+  [("MathData24/Feature_Maps__1GayNzpg.ipynb", 0, 117)],
+  # The archived retrain section is spliced from a second notebook that reuses `y`
+  # for the network's output while the feature-map cells above use it for a pixel
+  # coordinate, and it pulls its 50 images from a Google Slides deck that no longer
+  # exists. Rebuilt here on the toast dataset that ships with the course -- which is
+  # also the shape Deliverable 3 asks for.
+  ALEXNET_TRANSFER),
 
  (14, "autoencoders-and-generative", "Autoencoders & Generative Models",
   "Run the network backwards. Compression, reconstruction, and generating images that never existed.",

@@ -80,6 +80,12 @@ substantial — a line in your README is enough.
 
 ---
 
+## Next: Google Drive
+
+Once all three tools work, read **[drive.md](drive.md)**. It covers getting your own
+dataset into Colab, laying it out so `ImageFolder` finds your classes, and saving
+trained weights somewhere that survives the session ending. You need it from Week 13.
+
 ## Week 2 follow-up
 
 Once the above works, stretch each tool once:

@@ -21,9 +21,10 @@ def classify(src, err, unbound=(), gpu_failed=False):
     if m and m.group(1) in unbound:
         return 'cascade'
     e = err or ''
-    # the lab's own guard, firing correctly on a machine without a GPU
-    if 'This lab needs a GPU' in e:
-        return 'gpu-only'
+    name = e.split(':')[0].strip()
+    # a cell we interrupted for overrunning the per-cell budget
+    if name in ('KeyboardInterrupt', 'CellTimeoutError') or 'timed out' in e:
+        return 'too-slow-on-cpu'
     # wandb needs an interactive login; it is configured per-student in Colab
     if 'No API key configured' in e or 'wandb' in e.lower():
         return 'needs-credentials'
@@ -31,7 +32,6 @@ def classify(src, err, unbound=(), gpu_failed=False):
         return 'colab-only'
     if NEEDS_INPUT.search(src):
         return 'needs-stdin'
-    name = (err or '').split(':')[0].strip()
     if name in ('URLError', 'HTTPError', 'ConnectionError', 'ConnectTimeout',
                 'ReadTimeout', 'gaierror', 'SSLError', 'RemoteDisconnected',
                 'TimeoutError', 'timeout', 'IncompleteRead'):
@@ -52,7 +52,7 @@ def classify(src, err, unbound=(), gpu_failed=False):
     return 'BUG'
 
 
-def run(path, timeout=240, workdir=None):
+def run(path, timeout=180, workdir=None):
     """Execute one notebook. `workdir` is the kernel's cwd -- never the repo, or
     the labs will litter it with MNIST downloads and generated pages."""
     import nbformat
@@ -70,7 +70,7 @@ def run(path, timeout=240, workdir=None):
         "import warnings; warnings.filterwarnings('ignore')"))
 
     client = NotebookClient(nb, timeout=timeout, kernel_name='python3',
-                            allow_errors=True,
+                            allow_errors=True, interrupt_on_timeout=True,
                             resources={'metadata': {'path': workdir or ROOT}})
     client.execute()
 
@@ -108,6 +108,7 @@ def main():
     grand = {}
     # one scratch cwd for the whole run: notebooks download MNIST and write files,
     # and none of that belongs in the repository
+    harness_errors = []
     scratch = tempfile.mkdtemp(prefix='datasci26-exec-')
     print(f'kernel working directory: {scratch}\n')
     for p in labs:
@@ -116,6 +117,7 @@ def main():
             total, fails = run(p, workdir=scratch)
         except Exception as e:
             print(f'{name}: HARNESS ERROR {type(e).__name__}: {e}')
+            harness_errors.append(name)
             continue
         buckets = {}
         for i, kind, msg, first in fails:
@@ -131,9 +133,11 @@ def main():
         grand[name] = (total, ok, bugs)
 
     tb = sum(v[2] for v in grand.values())
-    print(f'\n{len(grand)} labs, {sum(v[0] for v in grand.values())} code cells, '
+    print(f'\n{len(grand)}/{len(labs)} labs, {sum(v[0] for v in grand.values())} code cells, '
           f'{sum(v[1] for v in grand.values())} ran clean, {tb} real bug(s)')
-    return 1 if tb else 0
+    if harness_errors:
+        print(f'{len(harness_errors)} lab(s) did not run at all: ' + ', '.join(harness_errors))
+    return 1 if (tb or harness_errors or len(grand) != len(labs)) else 0
 
 
 if __name__ == '__main__':

@@ -43,7 +43,8 @@ Plain HTML, Markdown, or a Jekyll theme are all fine. Submit the repo URL **and*
 The working implementation. It must run top to bottom without errors on a fresh runtime.
 
 1. **Implement AlexNet**, adapted to your dataset.
-2. **Load your own data** from Drive or GitHub. Your dataset, related to your problem.
+2. **Load your own data** from Drive or GitHub — see [`../setup/drive.md`](../setup/drive.md)
+   for the folder layout, the loader, and how to checkpoint back to Drive.
 3. **Preprocess properly** — resize to 224×224, normalize, and augment (flips, rotations,
    color jitter) where it makes sense.
 4. **Train and validate** on a real split. Track accuracy and loss per epoch. Save your weights.
@@ -97,6 +98,7 @@ The notebook carries the most weight because it is the only deliverable that has
 
 ## Where to start
 
+- `../setup/drive.md` — **read this first**: getting your dataset into Colab and your weights back out
 - `../labs/lab13_alexnet.ipynb` — loading, inspecting, and retraining AlexNet
 - `../interactive/alexnet.html` — every layer and shape, interactively
 - `../_source/notebooks/MathData25/Alexnet_Final_Project_Template__1R8l5OgR.ipynb` — prior template

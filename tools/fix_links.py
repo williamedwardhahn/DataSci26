@@ -42,6 +42,10 @@ REWRITE = [
     ("labels = {int(key):value for (key, value) in requests.get(LABELS_URL).json().items()}",
      "labels = {i: name for i, name in enumerate(requests.get(LABELS_URL).json())}",
      'new labels source is a list, not a dict'),
+    ("requests.get('https://s3.amazonaws.com/mlpipes/pytorch-quick-start/labels.json')",
+     "requests.get('https://raw.githubusercontent.com/anishathalye/imagenet-simple-labels"
+     "/master/imagenet-simple-labels.json')",
+     'mlpipes S3 bucket now 403s (inline)'),
     ("LABELS_URL = 'https://s3.amazonaws.com/mlpipes/pytorch-quick-start/labels.json'",
      "LABELS_URL = 'https://raw.githubusercontent.com/anishathalye/imagenet-simple-labels"
      "/master/imagenet-simple-labels.json'",
