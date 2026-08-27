@@ -32,12 +32,14 @@ Everything runs in a browser. There is nothing to install.
 | 7 | [07](labs/lab07_images-as-matrices.ipynb) | Images as matrices | [image](interactive/image1.html) · [colors](interactive/colors.html) · [bits](interactive/bit_depth.html) · [gamma](interactive/gamma.html) | |
 | 8 | [08](labs/lab08_image-combinatorics.ipynb) | Image combinatorics & hyperastronomical numbers | [combinatorics](interactive/pixelcombo.html) | **pick your problem** |
 | 9 | [09](labs/lab09_linear-fit.ipynb) | Linear fit with real data | [matmul](interactive/matrix_multiplication_lab.html) | **D1 — pitch deck** |
-| 10 | [10](labs/lab10_gradient-descent.ipynb) | Gradient descent in PyTorch | | **D2 — website** |
-| 11 | [11](labs/lab11_mnist-linear-classifier.ipynb) | MNIST & linear classifiers | | |
+| 10 | [10](labs/lab10_gradient-descent.ipynb) | Gradient descent in PyTorch ◦ | | **D2 — website** |
+| 11 | [11](labs/lab11_mnist-linear-classifier.ipynb) | MNIST & linear classifiers ◦ | | |
 | 12 | [12](labs/lab12_convolution.ipynb) | Convolution | [convolution](interactive/Conv1_a.html) · [pooling](interactive/pool.html) | **D3 — notebook** |
-| 13 | [13](labs/lab13_alexnet.ipynb) | AlexNet: filters, feature maps & transfer learning | [architecture](interactive/alexnet.html) | |
-| 14 | [14](labs/lab14_autoencoders-and-generative.ipynb) | Autoencoders & generative models | | **D4 — poster** |
+| 13 | [13](labs/lab13_alexnet.ipynb) | AlexNet: filters, feature maps & transfer learning ◦ | [architecture](interactive/alexnet.html) | |
+| 14 | [14](labs/lab14_autoencoders-and-generative.ipynb) | Autoencoders & generative models ◦ | | **D4 — poster** |
 | 15 | — | Project talks | | **D5 — talk** |
+
+◦ = needs a GPU runtime (*Runtime → Change runtime type → T4 GPU*); every other lab runs on CPU.
 
 The arc: **weeks 1–6** build the probability and simulation foundation · **weeks 7–8** establish
 that images are just arrays · **weeks 9–11** fit models to data, by hand and then by gradient

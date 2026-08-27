@@ -11,14 +11,30 @@ OUT = os.path.join(ROOT, 'labs')
 sys.path.insert(0, HERE)
 from labs_plan import PLAN
 
-SETUP = ("# Run this first, every session.\n"
-         "!pip install -q git+https://github.com/williamedwardhahn/mpcr\n"
-         "from mpcr import *\n"
-         "import torch\n"
-         "\n"
-         "# Every lab is device-agnostic: it runs on a GPU runtime or a plain CPU one.\n"
-         "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n"
-         "print('Running on:', device)")
+# mpcr's GPU()/GPU_data() construct tensors on device='cuda' unconditionally, so the
+# labs that use them need a GPU runtime. The rest run fine on a plain CPU runtime.
+GPU_LABS = {10, 11, 13, 14}
+
+SETUP_CPU = ("# Run this first, every session.\n"
+             "!pip install -q git+https://github.com/williamedwardhahn/mpcr\n"
+             "from mpcr import *\n"
+             "import torch\n"
+             "\n"
+             "# This lab runs on a plain CPU runtime.\n"
+             "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n"
+             "print('Running on:', device)")
+
+SETUP_GPU = ("# Run this first, every session.\n"
+             "# This lab needs a GPU runtime:\n"
+             "#   Runtime -> Change runtime type -> T4 GPU\n"
+             "!pip install -q git+https://github.com/williamedwardhahn/mpcr\n"
+             "from mpcr import *\n"
+             "import torch\n"
+             "\n"
+             "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n"
+             "assert device.type == 'cuda', (\n"
+             "    'This lab needs a GPU. Runtime -> Change runtime type -> T4 GPU')\n"
+             "print('Running on:', device)")
 
 
 def md(text):
@@ -53,9 +69,12 @@ def build(week, slug, title, blurb, objectives, interactive, homework, sources):
     if interactive:
         head += ["", "## Interactive labs for this week", ""]
         head += [f"- [`{os.path.basename(p)}`]({p})" for p in interactive]
+    if week in GPU_LABS:
+        head += ["", "> **GPU runtime required.** *Runtime \u2192 Change runtime type \u2192 T4 GPU*"]
     head += ["", "---"]
 
-    cells = [md('\n'.join(head)), code(SETUP)]
+    setup = SETUP_GPU if week in GPU_LABS else SETUP_CPU
+    cells = [md('\n'.join(head)), code(setup)]
     used = []
     for path, a, b in sources:
         full = os.path.join(SRC, path)

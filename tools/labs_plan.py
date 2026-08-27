@@ -118,7 +118,7 @@ PLAN = [
    "Measure accuracy honestly on held-out data"],
   [], ["Train to at least 85% test accuracy and report your confusion matrix.",
        "Show three digits your model gets wrong and argue why they are hard."],
-  [("MathDataSci/MNIST__19M60mQf.ipynb", 72, 147)]),
+  [("MathDataSci/MNIST__19M60mQf.ipynb", 0, 147)]),
 
  (12, "convolution", "Convolution",
   "One operation, applied everywhere, is what separates a linear classifier from vision.",

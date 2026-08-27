@@ -1,3 +1,12 @@
 _source/notebooks_full/
 .DS_Store
 __pycache__/
+
+# artifacts produced by running the labs (datasets, downloads, generated pages)
+data/
+W.data
+*.ipynb_checkpoints/
+users_list.html
+file.csv
+file.pdf
+page_b64.html
