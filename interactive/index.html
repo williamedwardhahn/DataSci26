@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>DataSci26 — Interactive Labs</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#fdfdfb; --fg:#1a1a1a; --mut:#666; --line:#e2e2dd; --accent:#8b2f2f; }
+  @media (prefers-color-scheme:dark){
+    :root { --bg:#16171a; --fg:#e8e6e1; --mut:#9a9791; --line:#2e3035; --accent:#e0956b; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:3rem 1.5rem;background:var(--bg);color:var(--fg);
+       font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:800px;margin:0 auto}
+  h1{font-size:1.9rem;margin:0 0 .25rem;letter-spacing:-.02em}
+  .sub{color:var(--mut);margin:0 0 2.5rem}
+  ul{list-style:none;padding:0;margin:0}
+  li{border-top:1px solid var(--line);padding:1.1rem 0}
+  li:last-child{border-bottom:1px solid var(--line)}
+  a{color:var(--fg);text-decoration:none;font-weight:600}
+  a:hover{color:var(--accent)}
+  .wk{display:inline-block;min-width:4.5rem;color:var(--accent);font-size:.78rem;
+      font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .desc{color:var(--mut);font-size:.92rem;margin:.2rem 0 0 4.5rem}
+  @media (max-width:520px){ .desc{margin-left:0} }
+  footer{margin-top:2.5rem;color:var(--mut);font-size:.85rem}
+</style>
+<main>
+<h1>Interactive Labs</h1>
+<p class="sub">Mathematics of Data Science &middot; run in the browser, nothing to install</p>
+<ul>
+  <li><span class="wk">Week 7</span><a href="image1.html">Image Basics</a>
+      <div class="desc">Shape, dtype, channels — the core properties of an image, live.</div></li>
+  <li><span class="wk">Week 7</span><a href="colors.html">Colormaps</a>
+      <div class="desc">How a grayscale matrix becomes a colored picture.</div></li>
+  <li><span class="wk">Week 7</span><a href="bit_depth.html">Bit Depth</a>
+      <div class="desc">Quantization and dithering — what you lose per bit.</div></li>
+  <li><span class="wk">Week 7</span><a href="gamma.html">Gamma &amp; Tone Mapping</a>
+      <div class="desc">Why pixel values are not linear in brightness.</div></li>
+  <li><span class="wk">Week 8</span><a href="pixelcombo.html">Image Combinatorics</a>
+      <div class="desc">Counting every possible image. The numbers stop making sense.</div></li>
+  <li><span class="wk">Week 9</span><a href="matrix_multiplication_lab.html">Matrix Multiplication</a>
+      <div class="desc">Step through a product one entry at a time.</div></li>
+  <li><span class="wk">Week 12</span><a href="Conv1_a.html">Convolution Explorer</a>
+      <div class="desc">Draw a kernel, watch it sweep the image.</div></li>
+  <li><span class="wk">Week 12</span><a href="pool.html">Pooling Explorer</a>
+      <div class="desc">Max vs. average pooling, stride and window, side by side.</div></li>
+  <li><span class="wk">Week 13</span><a href="alexnet.html">AlexNet Architecture</a>
+      <div class="desc">Every layer and every tensor shape, end to end.</div></li>
+</ul>
+<footer>Source: <a href="https://github.com/williamedwardhahn/DataSci26">williamedwardhahn/DataSci26</a></footer>
+</main>
