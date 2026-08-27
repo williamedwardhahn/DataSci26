@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Item Picker</title>
+</head>
+<body>
+
+<h2>Random Item Picker</h2>
+
+<div>
+    <label for="items">Enter items (comma separated):</label>
+    <input type="text" id="items" placeholder="e.g. Apple, Orange, Banana">
+</div>
+
+<button onclick="pickRandomItem()">Pick Random Item</button>
+
+<div id="result"></div>
+
+<script>
+    function pickRandomItem() {
+        // Get the input value and split it into an array
+        const items = document.getElementById('items').value.split(',').map(item => item.trim());
+
+        // Ensure there are at least 2 items
+        if (items.length < 2) {
+            alert('Please enter at least 2 items.');
+            return;
+        }
+
+        // Pick a random item from the array
+        const randomItem = items[Math.floor(Math.random() * items.length)];
+
+        // Display the result
+        document.getElementById('result').innerText = 'Chosen item: ' + randomItem;
+    }
+</script>
+
+</body>
+</html>

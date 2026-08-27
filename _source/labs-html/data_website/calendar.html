@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .calendar {
+            display: flex;
+            border: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+
+        .day {
+            flex: 1;
+            border-right: 1px solid #e0e0e0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .day:last-child {
+            border-right: none;
+        }
+
+        .day h3 {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .event {
+            margin: 10px 0;
+            padding: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .event-time {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .event-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .event-details {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .event-details > * {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-details">
+        <label><input type="checkbox" id="mon"> Mon</label>
+        <label><input type="checkbox" id="tue"> Tue</label>
+        <label><input type="checkbox" id="wed"> Wed</label>
+        <label><input type="checkbox" id="thu"> Thu</label>
+        <label><input type="checkbox" id="fri"> Fri</label>
+        <label><input type="checkbox" id="sat"> Sat</label>
+        <label><input type="checkbox" id="sun"> Sun</label>
+        <input type="time" id="eventTime">
+        <input type="color" id="eventColor">
+        <input type="text" id="eventText" placeholder="Enter event...">
+        <button onclick="addEvent()">Add Event</button>
+    </div>
+
+    <div class="calendar">
+        <div class="day" data-day="mon">
+            <h3>Monday</h3>
+        </div>
+        <div class="day" data-day="tue">
+            <h3>Tuesday</h3>
+        </div>
+        <div class="day" data-day="wed">
+            <h3>Wednesday</h3>
+        </div>
+        <div class="day" data-day="thu">
+            <h3>Thursday</h3>
+        </div>
+        <div class="day" data-day="fri">
+            <h3>Friday</h3>
+        </div>
+        <div class="day" data-day="sat">
+            <h3>Saturday</h3>
+        </div>
+        <div class="day" data-day="sun">
+            <h3>Sunday</h3>
+        </div>
+    </div>
+
+    <script>
+        function to12HourFormat(time24) {
+            const [hour, minute] = time24.split(':');
+            return [1 + (hour - 1) % 12 || 12, minute].join(':') + (hour >= 12 ? ' PM' : ' AM');
+        }
+
+        function addEvent() {
+    const eventText = document.getElementById("eventText").value;
+    let eventTime = document.getElementById("eventTime").value;
+    const eventColor = document.getElementById("eventColor").value;
+
+    if (eventTime) {
+        eventTime = to12HourFormat(eventTime);
+    }
+
+    if (eventText && eventTime) {
+        const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+        days.forEach(day => {
+            const checkbox = document.getElementById(day);
+            if (checkbox.checked) {
+                const dayDiv = document.querySelector(`.day[data-day=${day}]`);
+                const eventDiv = document.createElement("div");
+                eventDiv.className = "event";
+
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "event-time";
+                timeSpan.innerText = eventTime;
+                eventDiv.appendChild(timeSpan);
+
+                const colorSpan = document.createElement("span");
+                colorSpan.className = "event-color";
+                colorSpan.style.backgroundColor = eventColor;
+                eventDiv.appendChild(colorSpan);
+
+                const textSpan = document.createElement("span");
+                textSpan.innerText = eventText;
+                eventDiv.appendChild(textSpan);
+
+                dayDiv.appendChild(eventDiv);
+            }
+        });
+
+        // Clear the input fields after adding the event
+        document.getElementById("eventText").value = "";
+        document.getElementById("eventTime").value = "";
+        const checkboxes = document.querySelectorAll(".event-details input[type='checkbox']");
+        checkboxes.forEach(cb => cb.checked = false);
+    }
+
+    updateURL();  // Update the URL after adding the event
+}
+
+
+        function updateURL() {
+            const events = [];
+            
+            const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+            days.forEach(day => {
+                const dayDiv = document.querySelector(`.day[data-day=${day}]`);
+                const dayEvents = [];
+                
+                dayDiv.querySelectorAll('.event').forEach(eventDiv => {
+                    dayEvents.push({
+                        time: eventDiv.querySelector('.event-time').innerText,
+                        color: eventDiv.querySelector('.event-color').style.backgroundColor,
+                        text: eventDiv.querySelector('span:not(.event-time):not(.event-color)').innerText
+                    });
+                });
+                
+                events.push({
+                    day,
+                    events: dayEvents
+                });
+            });
+            
+            const encodedData = encodeURIComponent(JSON.stringify(events));
+            window.history.pushState(null, null, `?data=${encodedData}`);
+        }
+
+        function loadEventsFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedData = urlParams.get('data');
+            
+            if (encodedData) {
+                const events = JSON.parse(decodeURIComponent(encodedData));
+                events.forEach(dayData => {
+                    dayData.events.forEach(event => {
+                        const dayDiv = document.querySelector(`.day[data-day=${dayData.day}]`);
+                        const eventDiv = document.createElement("div");
+                        eventDiv.className = "event";
+
+                        const timeSpan = document.createElement("span");
+                        timeSpan.className = "event-time";
+                        timeSpan.innerText = event.time;
+                        eventDiv.appendChild(timeSpan);
+
+                        const colorSpan = document.createElement("span");
+                        colorSpan.className = "event-color";
+                        colorSpan.style.backgroundColor = event.color;
+                        eventDiv.appendChild(colorSpan);
+
+                        const textSpan = document.createElement("span");
+                        textSpan.innerText = event.text;
+                        eventDiv.appendChild(textSpan);
+
+                        dayDiv.appendChild(eventDiv);
+                    });
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadEventsFromURL);
+
+    </script>
+</body>
+</html>

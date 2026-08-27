@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convolution Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        canvas {
+            border: 1px solid black;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Convolution Demo</h1>
+    <canvas id="originalCanvas" width="256" height="256"></canvas>
+    <canvas id="filteredCanvas" width="256" height="256"></canvas>
+    <br>
+    <select id="kernelSelect">
+        <option value="identity">Identity</option>
+        <option value="edge">Edge Detection</option>
+        <option value="sharpen">Sharpen</option>
+        <option value="blur">Blur</option>
+        <option value="emboss">Emboss</option>
+        <option value="leftSobel">Left Sobel</option>
+        <option value="rightSobel">Right Sobel</option>
+        <option value="outline">Outline</option>
+        <option value="topSobel">Top Sobel</option>
+        <option value="bottomSobel">Bottom Sobel</option>
+    </select>
+    <button onclick="applySelectedKernel()">Run</button>
+    <script>
+        const originalCanvas = document.getElementById('originalCanvas');
+        const filteredCanvas = document.getElementById('filteredCanvas');
+        const originalCtx = originalCanvas.getContext('2d');
+        const filteredCtx = filteredCanvas.getContext('2d');
+        const img = new Image();
+
+        // Handle CORS
+        img.crossOrigin = "Anonymous";  
+
+        // Load image from the provided URL
+        img.src = 'https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQTIg6tKhqwokMCnry9-wROugbZ1GrgDbAz3dOwgGkHGAFFFuRmzCILAkDx9HKufB2kKO726I6fWLMcgsQ';
+
+        img.onload = () => {
+            originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+            filteredCtx.drawImage(img, 0, 0, filteredCanvas.width, filteredCanvas.height);
+        }
+
+        // Define kernels
+        const kernels = {
+            identity: [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+            edge: [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
+            sharpen: [[0,-1,0], [-1,5,-1], [0,-1,0]],
+            blur: [[1/9,1/9,1/9], [1/9,1/9,1/9], [1/9,1/9,1/9]],
+            emboss: [[-2,-1,0], [-1,1,1], [0,1,2]],
+            leftSobel: [[1,0,-1], [2,0,-2], [1,0,-1]],
+            rightSobel: [[-1,0,1], [-2,0,2], [-1,0,1]],
+            outline: [[-1,-1,-1], [-1,8,-1], [-1,-1,-1]],
+            topSobel: [[1,2,1], [0,0,0], [-1,-2,-1]],
+            bottomSobel: [[-1,-2,-1], [0,0,0], [1,2,1]]
+        };
+
+        function applySelectedKernel() {
+            const selectedKernel = kernels[document.getElementById('kernelSelect').value];
+            applyKernel(selectedKernel);
+        }
+
+        function applyKernel(kernel) {
+            const imageData = filteredCtx.getImageData(0, 0, filteredCanvas.width, filteredCanvas.height);
+            const pixels = imageData.data;
+            const originalData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+            const originalPixels = originalData.data;
+
+            for (let y = 1; y < originalCanvas.height - 1; y++) {
+                for (let x = 1; x < originalCanvas.width - 1; x++) {
+                    let sum = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const pos = (y + ky) * (originalCanvas.width * 4) + (x + kx) * 4;
+                            const gray = (originalPixels[pos] + originalPixels[pos + 1] + originalPixels[pos + 2]) / 3;
+                            sum += gray * kernel[ky + 1][kx + 1];
+                        }
+                    }
+                    const pos = y * (originalCanvas.width * 4) + x * 4;
+                    pixels[pos] = pixels[pos + 1] = pixels[pos + 2] = sum;
+                }
+            }
+
+            filteredCtx.putImageData(imageData, 0, 0);
+        }
+    </script>
+</body>
+</html>
+

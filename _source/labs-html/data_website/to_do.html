@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        .light {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .delete-btn {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <input type="text" id="task-input" placeholder="Enter a task">
+    <button onclick="addTask()">Add Task</button>
+</div>
+<ul id="todo-list">
+    <!-- Tasks will be added here -->
+</ul>
+
+<script>
+    function addTask() {
+        const taskInput = document.getElementById('task-input');
+        const taskValue = taskInput.value.trim();
+
+        if (taskValue) {
+            const taskItem = document.createElement('li');
+
+            taskItem.innerHTML = `
+                <svg width="20" height="20" class="light red" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="15" fill="#FF0000"/>
+                </svg>
+                ${taskValue}
+                <span class="delete-btn" onclick="deleteTask(this)">❌</span>
+            `;
+
+            document.getElementById('todo-list').appendChild(taskItem);
+            taskInput.value = ''; // Clear input
+        }
+    }
+
+    function deleteTask(deleteBtn) {
+        const taskItem = deleteBtn.parentElement;
+        taskItem.parentNode.removeChild(taskItem);
+    }
+
+    document.getElementById('todo-list').addEventListener('click', function(e) {
+        if (e.target && e.target.tagName === 'circle') {
+            const circle = e.target;
+            if (circle.getAttribute('fill') === '#FF0000') {
+                circle.setAttribute('fill', '#00FF00');
+            } else if (circle.getAttribute('fill') === '#00FF00') {
+                circle.setAttribute('fill', '#FF0000');
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

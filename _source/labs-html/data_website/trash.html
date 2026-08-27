@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash Night Reminder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #333;
+            padding-top: 20px;
+        }
+
+        #checkboxes {
+            position: absolute;
+            top: 20px;
+        }
+
+        #reminder {
+            font-size: 5em;
+            background: -webkit-linear-gradient(#eee, #333);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 20px;
+        }
+
+        .neon {
+            text-shadow: 0 0 5px #ff4da6, 0 0 15px #ff4da6, 0 0 20px #ff4da6, 0 0 25px #ff4da6, 0 0 30px #ff4da6, 0 0 35px #ff4da6;
+        }
+
+        .grayed {
+            text-shadow: none;
+            background: -webkit-linear-gradient(#888, #444);
+        }
+    </style>
+</head>
+<body>
+    <div id="checkboxes">
+        <label><input type="checkbox" value="0"> Sunday</label>
+        <label><input type="checkbox" value="1"> Monday</label>
+        <label><input type="checkbox" value="2"> Tuesday</label>
+        <label><input type="checkbox" value="3"> Wednesday</label>
+        <label><input type="checkbox" value="4"> Thursday</label>
+        <label><input type="checkbox" value="5"> Friday</label>
+        <label><input type="checkbox" value="6"> Saturday</label>
+    </div>
+
+    <span id="reminder">Trash Night</span>
+
+    <script>
+        function updateReminder() {
+            const reminderElement = document.getElementById("reminder");
+            const checkboxes = document.querySelectorAll("#checkboxes input[type='checkbox']");
+            const currentDate = new Date();
+            const currentDay = currentDate.getDay();
+
+            let isTrashNight = false;
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked && parseInt(checkbox.value) === currentDay) {
+                    isTrashNight = true;
+                }
+            });
+
+            if (isTrashNight) {
+                reminderElement.textContent = "Trash Night";
+                reminderElement.classList.add("neon");
+                reminderElement.classList.remove("grayed");
+            } else {
+                reminderElement.textContent = "Not Trash Night";
+                reminderElement.classList.add("grayed");
+                reminderElement.classList.remove("neon");
+            }
+        }
+
+        // Initial check
+        updateReminder();
+
+        // Update the reminder whenever a checkbox is changed
+        document.getElementById("checkboxes").addEventListener("change", updateReminder);
+    </script>
+</body>
+</html>

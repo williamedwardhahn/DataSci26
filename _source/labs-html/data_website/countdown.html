@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #display {
+            font-size: 2em;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Countdown Timer</h1>
+        <input type="number" id="minutes" placeholder="Minutes" min="0" max="59" value="0">
+        <input type="number" id="seconds" placeholder="Seconds" min="0" max="59" value="0">
+        <button onclick="startCountdown()">Start</button>
+        <button onclick="resetCountdown()">Reset</button>
+        <div id="display">00:00</div>
+    </div>
+    <script>
+        let countdown;
+        const display = document.getElementById('display');
+
+        function startCountdown() {
+            clearInterval(countdown);
+            const minutes = parseInt(document.getElementById('minutes').value, 10) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value, 10) || 0;
+            let totalTime = minutes * 60 + seconds;
+
+            if (totalTime <= 0) {
+                alert('Please enter a valid time.');
+                return;
+            }
+
+            countdown = setInterval(() => {
+                if (totalTime <= 0) {
+                    clearInterval(countdown);
+                    beep();
+                    display.textContent = "00:00";
+                    return;
+                }
+                const displayMinutes = Math.floor(totalTime / 60);
+                const displaySeconds = totalTime % 60;
+                display.textContent = `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
+                totalTime--;
+            }, 1000);
+        }
+
+        function resetCountdown() {
+            clearInterval(countdown);
+            display.textContent = "00:00";
+            document.getElementById('minutes').value = 0;
+            document.getElementById('seconds').value = 0;
+        }
+
+        function beep() {
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = context.createOscillator();
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(440, context.currentTime);
+                oscillator.connect(context.destination);
+                oscillator.start();
+                oscillator.stop(context.currentTime + 1);
+            } catch (e) {
+                alert("Your browser doesn't support audio!");
+            }
+        }
+    </script>
+</body>
+</html>

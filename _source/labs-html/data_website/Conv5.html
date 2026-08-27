@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Convolution Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin: 5px;
+        }
+        .filterContainer {
+            text-align: center;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Convolution Demo</h1>
+    <canvas id="originalCanvas" width="256" height="256"></canvas>
+    <div id="canvasContainer"></div>
+    <br>
+    <select id="nSelect">
+        <script>
+            for (let i = 1; i <= 100; i++) {
+                document.write('<option value="' + i + '">' + i + '</option>');
+            }
+        </script>
+    </select>
+    <button onclick="applyRandomKernels()">Run Random Filters</button>
+
+    <script>
+        const originalCanvas = document.getElementById('originalCanvas');
+        const originalCtx = originalCanvas.getContext('2d');
+        const img = new Image();
+
+        img.crossOrigin = "Anonymous";  
+        img.src = 'https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQTIg6tKhqwokMCnry9-wROugbZ1GrgDbAz3dOwgGkHGAFFFuRmzCILAkDx9HKufB2kKO726I6fWLMcgsQ';
+
+        img.onload = () => {
+            originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+        }
+
+        function applyRandomKernels() {
+            const canvasContainer = document.getElementById('canvasContainer');
+            canvasContainer.innerHTML = '';
+            const n = parseInt(document.getElementById('nSelect').value);
+
+            for (let i = 0; i < n; i++) {
+                const randomKernel = generateRandomKernel();
+
+                const filterContainer = document.createElement('div');
+                filterContainer.className = 'filterContainer';
+
+                const filterCanvas = document.createElement('canvas');
+                filterCanvas.width = filterCanvas.height = 27; // 3x3 scaled by 9
+                drawFilterOnCanvas(filterCanvas, randomKernel);
+
+                const featureCanvas = document.createElement('canvas');
+                featureCanvas.width = 128;
+                featureCanvas.height = 128;
+
+                filterContainer.appendChild(filterCanvas);
+                filterContainer.appendChild(featureCanvas);
+                canvasContainer.appendChild(filterContainer);
+
+                const ctx = featureCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, featureCanvas.width, featureCanvas.height);
+
+                applyKernel(randomKernel, ctx, featureCanvas);
+            }
+        }
+
+        function drawFilterOnCanvas(canvas, kernel) {
+            const ctx = canvas.getContext('2d');
+            for (let y = 0; y < 3; y++) {
+                for (let x = 0; x < 3; x++) {
+                    const value = kernel[y][x];
+                    const color = Math.floor((value + 1) * 127.5);  // Scale to 0-255
+                    ctx.fillStyle = `rgb(${color}, ${color}, ${color})`;
+                    ctx.fillRect(x * 9, y * 9, 9, 9);  // Each cell is 9x9 pixels
+                }
+            }
+        }
+
+        function generateRandomKernel() {
+            return Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => Math.random() * 2 - 1));
+        }
+
+        function applyKernel(kernel, ctx, canvas) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            const originalData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const originalPixels = originalData.data;
+
+            for (let y = 1; y < canvas.height - 1; y++) {
+                for (let x = 1; x < canvas.width - 1; x++) {
+                    let sum = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const pos = (y + ky) * (canvas.width * 4) + (x + kx) * 4;
+                            const gray = (originalPixels[pos] + originalPixels[pos + 1] + originalPixels[pos + 2]) / 3;
+                            sum += gray * kernel[ky + 1][kx + 1];
+                        }
+                    }
+                    const pos = y * (canvas.width * 4) + x * 4;
+                    pixels[pos] = pixels[pos + 1] = pixels[pos + 2] = sum;
+                    pixels[pos + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+    </script>
+</body>
+</html>
+

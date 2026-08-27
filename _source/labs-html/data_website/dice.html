@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Dice System</title>
+    <style>
+        .dot {
+            fill: white;
+            r: 5;  /* radius of each dot */
+        }
+        #diceBackground {
+            fill: red;  /* Initial color */
+        }
+    </style>
+</head>
+<body>
+    <button onclick="rollDice()">Roll the Dice</button>
+    <svg id="diceSVG" width="100" height="100" viewBox="0 0 100 100">
+        <!-- Background for the dice -->
+        <rect id="diceBackground" width="100" height="100" rx="10" ry="10"></rect>
+        <!-- This SVG will have circles (dots) added to it based on the dice roll -->
+    </svg>
+
+    <script>
+        let lastColor = null;
+
+        function rollDice() {
+            var diceValue = Math.floor(Math.random() * 6) + 1;
+
+            // Clear previous dots (but not the background)
+            var circles = document.querySelectorAll('.dot');
+            circles.forEach(circle => circle.remove());
+
+            // Define positions for the dots based on dice faces
+            const dotPositions = {
+                1: [[50, 50]],
+                2: [[25, 25], [75, 75]],
+                3: [[25, 25], [50, 50], [75, 75]],
+                4: [[25, 25], [25, 75], [75, 25], [75, 75]],
+                5: [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]],
+                6: [[25, 25], [25, 50], [25, 75], [75, 25], [75, 50], [75, 75]],
+            };
+
+            // Add dots to the SVG based on the dice roll
+            dotPositions[diceValue].forEach(pos => {
+                var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", pos[0]);
+                circle.setAttribute("cy", pos[1]);
+                circle.setAttribute("r", 5);
+                circle.setAttribute("class", "dot");
+                document.getElementById('diceSVG').appendChild(circle);
+            });
+
+            // Change the background color for visual indication of a new roll
+            const colors = ["red", "green", "blue", "yellow", "purple", "orange", "pink", "cyan"];
+            
+            if (lastColor) {
+                const index = colors.indexOf(lastColor);
+                if (index > -1) {
+                    colors.splice(index, 1);
+                }
+            }
+
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const diceBackground = document.getElementById('diceBackground');
+            diceBackground.style.fill = randomColor;
+            lastColor = randomColor;
+        }
+    </script>
+</body>
+</html>
