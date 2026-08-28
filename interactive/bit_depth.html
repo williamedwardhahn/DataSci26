@@ -1,224 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bit Depth Lab — visualize quantization & dithering</title>
-  <style>
-    :root{
-      --bg:#0b0d12; --panel:#121621; --muted:#8b93a7; --text:#e9edf5;
-      --accent:#7aa2ff; --accent-2:#ff4d4d; --danger:#ff6b81; --success:#4caf50;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; background:linear-gradient(180deg,#0b0d12,#0e1320); color:var(--text);
-      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-      display:flex; flex-direction:column; align-items:center; min-height:100vh;
-    }
-    a{color:var(--accent)}
-    header{
-      display:flex; gap:24px; align-items:center; justify-content:space-between;
-      padding:20px 24px; border-bottom:1px solid #1d2333; background:rgba(10,14,25,.8);
-      backdrop-filter:saturate(140%) blur(10px); position:sticky; top:0; z-index:10;
-      width:100%; max-width:1400px; margin:0 auto;
-    }
-    h1{font-size:24px;margin:0;font-weight:700;letter-spacing:.3px}
-    .container{max-width:1400px;margin:20px auto;padding:0 20px;width:100%}
-    .row{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
-    @media (max-width: 1200px){.row{grid-template-columns:340px 1fr;gap:20px}}
-    @media (max-width: 900px){.row{grid-template-columns:1fr;gap:20px}}
-    .panel{background:var(--panel);border:1px solid #242a3b;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.15),0 1px 3px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s}
-    .panel:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,.2),0 2px 4px rgba(0,0,0,.15)}
-    .panel h2{font-size:16px;margin:0 0 10px;color:#bfc7dc}
-    .panel .sub{font-size:12px;color:var(--muted);margin:4px 0 12px}
-    .controls{display:grid;gap:10px}
-    label{font-size:12px;color:#b7bfd6;font-weight:500}
-    select,input[type="number"],input[type="file"],input[type="range"],button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3046;background:#0f1424;color:var(--text);transition:border-color .2s}
-    select:hover,input:hover,button:hover{border-color:#3b4672}
-    button{cursor:pointer;background:linear-gradient(180deg,#1b2140,#121933);border:1px solid #2b3352;font-weight:500;position:relative;overflow:hidden}
-    button::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,.1));opacity:0;transition:opacity .3s}
-    button:hover::before{opacity:1}
-    button.primary{background:linear-gradient(180deg,#3552ff,#1a2cd1);border-color:#5b72ff;color:white}
-    button.primary:hover{background:linear-gradient(180deg,#4562ff,#2a3ce1);border-color:#6b82ff}
-    button:active{transform:scale(0.98)}
-    .radio-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .radio-row label{display:flex;gap:6px;align-items:center;padding:8px 14px;border:1px solid #2a3046;border-radius:999px;background:#0f1424;cursor:pointer;transition:all .2s;font-size:12px;position:relative;overflow:hidden}
-    .radio-row label::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(122,162,255,.1));opacity:0;transition:opacity .2s}
-    .radio-row label:hover{border-color:#3b4672;background:#141829}
-    .radio-row label:hover::before{opacity:1}
-    .radio-row input{accent-color:#6f92ff}
-    .radio-row input:checked + span{color:var(--accent);font-weight:600}
-    .stack{display:flex;gap:10px;flex-wrap:wrap}
-    .badge{display:inline-flex;align-items:center;gap:6px;background:#0e1528;padding:8px 12px;border:1px solid #263055;border-radius:999px;font-size:12px;color:#c6d2f1;font-weight:500}
-    .badge.success{background:#1a3d1a;border-color:#2d5a2d;color:#90ee90}
-    .footer{margin:40px auto;color:var(--muted);font-size:13px;text-align:center;max-width:700px}
-    .canvases{display:flex;justify-content:center;align-items:center;gap:30px;margin-top:24px;flex-wrap:wrap}
-    .canvas-wrap{position:relative;border-radius:16px;overflow:hidden;background:#0a0f1f;border:1px solid #242a3b;flex:0 0 auto;box-shadow:0 4px 20px rgba(0,0,0,.2),0 1px 3px rgba(0,0,0,.3)}
-    .canvas-wrap header{position:absolute;inset:auto auto 16px 16px;background:rgba(13,18,35,.95);border:1px solid #263055;border-radius:10px;padding:8px 14px;font-size:14px;font-weight:600;backdrop-filter:blur(12px);letter-spacing:.3px}
-    canvas{display:block;width:360px;height:360px;image-rendering: pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges}
-    @media (max-width: 900px){canvas{width:300px;height:300px}}
-    @media (max-width: 600px){canvas{width:240px;height:240px}}
-    .hover-dot{position:absolute;pointer-events:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent-2);background:rgba(255,77,77,.3);transform:translate(-50%,-50%);display:none;box-shadow:0 0 8px rgba(255,77,77,.6),0 0 2px rgba(0,0,0,.4)}
-    .inspect{display:grid;grid-template-columns:1fr;gap:12px}
-    .inspect pre{margin:0;background:#0e1426;border:1px solid #263055;border-radius:10px;padding:12px;overflow:auto;max-height:240px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;color:#cfe1ff;line-height:1.4}
-    .histogram-container{margin-top:12px}
-    .mini-grid{display:grid;gap:3px;grid-auto-flow:column;grid-template-rows:repeat(auto-fill, minmax(0, 1fr))}
-    .mini-grid.cols-2{grid-template-columns:repeat(2,1fr)}
-    .mini-grid.cols-4{grid-template-columns:repeat(4,1fr)}
-    .mini-grid.cols-8{grid-template-columns:repeat(8,1fr)}
-    .mini-grid.cols-16{grid-template-columns:repeat(16,1fr)}
-    .mini-grid.cols-32{grid-template-columns:repeat(32,1fr)}
-    .mini-grid.cols-64{grid-template-columns:repeat(64,1fr)}
-    .mini-grid.cols-128{grid-template-columns:repeat(128,1fr)}
-    .mini-grid.cols-256{grid-template-columns:repeat(256,1fr)}
-    .mini-grid div{display:flex;align-items:center;justify-content:center;border:1px solid #2a334a;background:#0c1225;border-radius:4px;font-size:11px;color:#c5d3ff;font-weight:600;padding:2px;min-height:40px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
-    .mini-grid div:hover{border-color:#4a5570;transform:translateY(-1px);z-index:10}
-    .mini-grid div .bar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg, rgba(122,162,255,.8), rgba(122,162,255,.4));transition:height .3s ease}
-    .mini-grid div .label{position:relative;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-    .range{display:flex;align-items:center;gap:10px}
-    .range span{min-width:72px;text-align:right;font-weight:500}
-    .loading{display:inline-block;width:16px;height:16px;border:2px solid var(--muted);border-radius:50%;border-top-color:var(--accent);animation:spin 1s linear infinite;margin-left:8px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bit Depth — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
+<style>
+  .bar { height:8px; background:var(--paper-sunk); border:1px solid var(--rule-soft); }
+  .bar > i { display:block; height:100%; background:var(--live); }
+  .label { font:400 .72rem/1.4 var(--mono); color:var(--ink-3); }
+  #loadingIndicator { font:400 .72rem/1 var(--mono); color:var(--ink-3); }
+  .dot { width:14px; height:14px; border:1px solid var(--rule); display:inline-block; vertical-align:-2px; }
+</style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>🧪 Bit Depth Lab</h1>
-      <p style="margin:0;font-size:14px;color:var(--muted);font-weight:400">Visualize quantization & dithering in real-time</p>
-    </div>
-    <div class="stack">
-      <span class="badge">🖼️ Drag & drop</span>
-      <span class="badge">🔍 Hover to inspect</span>
-      <span class="badge success">✨ Real-time</span>
-    </div>
-  </header>
+<main class="plate">
+  <p class="lede">
+    Eight bits per channel is a choice, not a law. Drop to four and you see banding;
+    drop to one and the picture survives only if you <strong>dither</strong> &mdash; trading
+    a lie about each pixel for the truth about the neighbourhood.
+  </p>
 
-  <main class="container">
-    <section class="row">
-      <div class="panel">
-        <h2>Step 1 — Pick or load an image</h2>
-        <p class="sub">Use sample images or upload your own. Processing runs locally in your browser.</p>
-        <div class="controls" id="controls">
-          <div>
-            <label for="imgPick">Sample Images</label>
-            <select id="imgPick">
-              <option value="portrait">Portrait</option>
-              <option value="gradient">Gradient ramp</option>
-              <option value="checker">Checker grid</option>
-              <option value="dogs">Dog Breeds (color)</option>
-            </select>
-          </div>
-          <div>
-            <label for="fileInput">Upload image</label>
-            <input id="fileInput" type="file" accept="image/*" />
-          </div>
-          <div>
-            <label>Channel Mode</label>
-            <div class="radio-row" aria-label="channel mode">
-              <label><input type="radio" name="mode" value="gray" checked><span>Grayscale</span></label>
-              <label><input type="radio" name="mode" value="color"><span>Color (per-channel)</span></label>
-            </div>
-          </div>
-          <div>
-            <label>Transfer (Gamma)</label>
-            <div class="radio-row" aria-label="gamma mode">
-              <label><input type="radio" name="gamma" value="srgb" checked><span>sRGB (display)</span></label>
-              <label><input type="radio" name="gamma" value="linear"><span>Linear light</span></label>
-            </div>
-          </div>
-          <div>
-            <label for="bitSlider">Bit Depth <span id="bitLabel" style="float:right;font-weight:600">8-bit</span></label>
-            <input id="bitSlider" type="range" min="1" max="8" step="1" value="8">
-          </div>
-          <div>
-            <label>Quantizer</label>
-            <div class="radio-row" aria-label="quantizer type">
-              <label><input type="radio" name="quant" value="midtread" checked><span>Mid‑tread</span></label>
-              <label><input type="radio" name="quant" value="midrise"><span>Mid‑rise</span></label>
-            </div>
-          </div>
-          <div>
-            <label>Dithering</label>
-            <div class="radio-row" aria-label="dither type">
-              <label><input type="radio" name="dither" value="none" checked><span>None</span></label>
-              <label><input type="radio" name="dither" value="bayer4"><span>Ordered 4×4</span></label>
-              <label><input type="radio" name="dither" value="bayer8"><span>Ordered 8×8</span></label>
-              <label><input type="radio" name="dither" value="fs"><span>Floyd–Steinberg</span></label>
-              <label><input type="radio" name="dither" value="jjn"><span>JJN</span></label>
-            </div>
-          </div>
-          <div class="range">
-            <label for="mix">Effect Strength</label>
-            <input id="mix" type="range" min="0" max="1" step="0.01" value="1" />
-            <span id="mixLabel">100%</span>
-          </div>
-          <div class="range">
-            <label for="zoom">Inspector Zoom</label>
-            <input id="zoom" type="range" min="1" max="16" step="1" value="8" />
-            <span id="zoomLabel">8×</span>
-          </div>
-          <button class="primary" id="randomize">🎲 Randomize preset</button>
-          <div class="tips" style="background:linear-gradient(135deg,#1a2545,#1d284a);border:1px solid #2b3552;border-radius:14px;padding:18px;margin-top:12px;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)">
-            <h3 style="margin:0 0 10px;color:var(--accent);font-size:14px;display:flex;align-items:center;gap:6px">💡 Quick Tips</h3>
-            <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.7;color:#d1d8e8">
-              <li>Lower bits increase quantization error; try 2–4 bits with dithering</li>
-              <li>Switch sRGB/Linear to see how gamma affects perceived banding</li>
-              <li>Hover the image to inspect exact pixel values and calculations</li>
-              <li>Floyd-Steinberg and JJN are error diffusion algorithms</li>
-            </ul>
-          </div>
+  <div>
+    <section class="panel panel--sticky">
+      <h2>Controls</h2>
+
+      <div class="field">
+        <label for="imgPick">Sample</label>
+        <select id="imgPick">
+          <option value="portrait" selected>Portrait (astronaut)</option>
+          <option value="dogs">Texture (fur)</option>
+          <option value="gradient">Linear ramp</option>
+          <option value="checker">Checkerboard</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="fileInput">Or your own image</label>
+        <input id="fileInput" type="file" accept="image/*"/>
+      </div>
+
+      <div class="field">
+        <label for="bitSlider">Bits per channel <span class="field-value" id="bitLabel">8</span></label>
+        <input id="bitSlider" type="range" min="1" max="8" step="1" value="8">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Channels</span>
+        <div class="segmented" role="radiogroup" aria-label="Channel mode">
+          <label><input type="radio" name="mode" value="gray" checked><span>Gray</span></label>
+          <label><input type="radio" name="mode" value="color"><span>Colour</span></label>
         </div>
       </div>
 
-      <div class="panel">
-        <h2>Step 2 — Visualize & Compare <span id="loadingIndicator" class="loading" style="display:none"></span></h2>
-        <p class="sub">Side‑by‑side original and quantized outputs. Blend with Mix for A/B comparisons.</p>
-        <div class="canvases">
-          <div class="canvas-wrap">
-            <header>Input</header>
-            <canvas id="inCanvas" width="256" height="256" aria-label="input image"></canvas>
-            <div id="dotIn" class="hover-dot"></div>
-          </div>
-          <div class="canvas-wrap">
-            <header>Output</header>
-            <canvas id="outCanvas" width="256" height="256" aria-label="output image"></canvas>
-            <div id="dotOut" class="hover-dot"></div>
-          </div>
+      <div class="field">
+        <span class="field-label">Quantise in</span>
+        <div class="segmented" role="radiogroup" aria-label="Transfer">
+          <label><input type="radio" name="gamma" value="srgb" checked><span>sRGB</span></label>
+          <label><input type="radio" name="gamma" value="linear"><span>Linear</span></label>
         </div>
-        
-        <div style="margin-top:32px">
-          <h3 style="font-size:16px;margin:0 0 16px;color:#bfc7dc">Inspector</h3>
-          <div class="inspect">
-            <div class="stack" style="margin-bottom:12px">
-              <span class="badge">Range: <span id="rangeBadge">0…255</span></span>
-              <span class="badge">Mode: <span id="modeBadge">Grayscale</span></span>
-              <span class="badge">Bits: <span id="bitsBadge">8</span></span>
-              <span class="badge">Levels: <span id="levelsBadge">256</span></span>
-              <span class="badge">PSNR: <span id="psnrBadge">∞ dB</span></span>
-            </div>
-            <pre id="inspectorBox">Hover the image to see pixel math:
-1) Read pixel (sRGB)
-2) Convert to {linear or sRGB}
-3) Quantize to N levels (based on bits & quantizer)
-4) Dither adjustment (if any)
-5) Convert back to sRGB → display value
-            </pre>
-            <div class="histogram-container">
-              <label style="margin-bottom:8px;display:block">Histogram <span style="font-weight:400;color:var(--muted)">(quantized levels)</span></label>
-              <div class="mini-grid" id="histogram"></div>
-            </div>
-          </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Quantiser</span>
+        <div class="segmented" role="radiogroup" aria-label="Quantiser">
+          <label><input type="radio" name="quant" value="midtread" checked><span>Mid-tread</span></label>
+          <label><input type="radio" name="quant" value="midrise"><span>Mid-rise</span></label>
         </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Dithering</span>
+        <div class="segmented" role="radiogroup" aria-label="Dithering" style="flex-wrap:wrap">
+          <label><input type="radio" name="dither" value="none" checked><span>None</span></label>
+          <label><input type="radio" name="dither" value="bayer4"><span>Bayer 4</span></label>
+          <label><input type="radio" name="dither" value="bayer8"><span>Bayer 8</span></label>
+          <label><input type="radio" name="dither" value="fs"><span>Floyd&ndash;S.</span></label>
+          <label><input type="radio" name="dither" value="jjn"><span>JJN</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="mix">Blend to original <span class="field-value" id="mixLabel">100%</span></label>
+        <input id="mix" type="range" min="0" max="1" step="0.01" value="1"/>
+      </div>
+
+      <div class="field">
+        <label for="zoom">Inspector zoom <span class="field-value" id="zoomLabel">8×</span></label>
+        <input id="zoom" type="range" min="1" max="16" step="1" value="8"/>
+      </div>
+
+      <div class="field">
+        <button type="button" id="randomize">Random image</button>
+        <div id="loadingIndicator" style="margin-top:var(--step)"></div>
+      </div>
+
+      <dl class="stats">
+        <div class="stat"><dt>Levels</dt><dd id="levelsBadge">256</dd></div>
+        <div class="stat"><dt>PSNR</dt><dd id="psnrBadge">—</dd></div>
+        <div class="stat"><dt>Bits</dt><dd id="bitsBadge">8</dd></div>
+        <div class="stat"><dt>Mode</dt><dd id="modeBadge">gray</dd></div>
+        <div class="stat"><dt>Range</dt><dd id="rangeBadge">—</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Figure</h2>
+      <div class="figs figs--2">
+        <figure>
+          <canvas id="inCanvas" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 1</b> Original. <span class="dot" id="dotIn"></span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="outCanvas" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 2</b> Quantised. <span class="dot" id="dotOut"></span></figcaption>
+        </figure>
       </div>
     </section>
 
-    <p class="footer">
-      <strong>Play with quantization!</strong> Try 1–2 bits with and without dithering on the gradient. Toggle sRGB/Linear to understand why gamma matters. All processing runs client‑side using the Canvas API.
-    </p>
-  </main>
+    <section class="panel">
+      <h2>Inspector</h2>
+      <div class="readout" id="inspectorBox">Move over Fig. 1 to magnify a neighbourhood.</div>
+    </section>
 
-  <script>
+    <section class="panel">
+      <h2>Code histogram</h2>
+      <figure>
+        <canvas id="histogram" width="640" height="180"></canvas>
+        <figcaption><b>Fig. 3</b> How often each quantised code is used. Fewer bits, fewer bars.</figcaption>
+      </figure>
+    </section>
+  </div>
+</main>
+
+<script src="lab.js"></script>
+<script>Lab.head({ no: 'Plate 02', title: 'Bit Depth & Dithering' });</script>
+<script>
+
   // ---------- Utilities ----------
   const $$ = sel => document.querySelector(sel);
   const $$$ = sel => Array.from(document.querySelectorAll(sel));
@@ -269,8 +192,8 @@
   const psnrBadge = $$('#psnrBadge');
   const histogramEl = $$('#histogram');
 
-  const DEFAULT_PORTRAIT = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Human_faces.jpg/1280px-Human_faces.jpg';
-  const DEFAULT_DOGS = 'https://upload.wikimedia.org/wikipedia/commons/1/18/Dog_Breeds.jpg';
+  const DEFAULT_PORTRAIT = Lab.SAMPLES.portrait.src;
+  const DEFAULT_DOGS = Lab.SAMPLES.texture.src;
 
   let state = {
     mode: 'gray', // 'gray' | 'color'
@@ -692,6 +615,8 @@
     pickChange('gradient');
   }
   init();
-  </script>
+  
+</script>
+<script>Lab.foot();</script>
 </body>
 </html>

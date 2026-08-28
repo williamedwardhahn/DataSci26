@@ -8,9 +8,14 @@ URL = re.compile(r'https?://[^\s"\'<>)\]\\`]+')
 # whether the link works for a student, so report them separately.
 BOT_BLOCKED = ('chatgpt.com', 'claude.ai', 'i.stack.imgur.com', 'openai.com')
 
+# Bare origins named only so the browser can warm a connection. They are not
+# documents and 404 when fetched, which says nothing about the page.
+PRECONNECT = ('https://fonts.gstatic.com', 'https://fonts.googleapis.com')
+
 def skip(u):
-    """Placeholders and bare URL prefixes built up in code are not real links."""
+    """Placeholders, preconnect origins and URL prefixes built up in code."""
     return ('YOUR-USERNAME' in u
+            or u.rstrip('/') in [p.rstrip('/') for p in PRECONNECT]
             or u.endswith('/d/')
             or u.rstrip('/').endswith(('/presentation', '/spreadsheets')))
 UA = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '

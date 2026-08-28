@@ -1,0 +1,376 @@
+/* ---------------------------------------------------------------------------
+   DataSci26 — shared style for the interactive labs.
+
+   The idea is a printed scientific plate: warm paper, fine graph rule, a single
+   vermilion ink for anything live, and every number set in monospace so figures
+   line up in columns the way they would in a lab notebook.
+
+   Light is the default. Dark is a real second design, not an inversion.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* paper + ink */
+  --paper:      #f2eee5;
+  --paper-2:    #faf8f3;
+  --paper-sunk: #e8e2d5;
+  --ink:        #16171b;
+  --ink-2:      #4a4a52;
+  --ink-3:      #7c7a80;
+  --rule:       #cfc7b6;
+  --rule-soft:  #e0d9cb;
+
+  /* one live ink, one measured ink */
+  --live:       #b8391f;
+  --live-soft:  #f0d9d2;
+  --measure:    #2b5c7a;
+  --measure-soft:#d8e5ee;
+
+  --grid-line:  rgba(22, 23, 27, 0.045);
+  --shadow:     0 1px 0 rgba(22,23,27,.05);
+
+  --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --step: 0.5rem;
+  --rad: 2px;               /* plates have corners, not pills */
+}
+
+:root[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #14151a;
+    --paper-2:    #1b1d23;
+    --paper-sunk: #101115;
+    --ink:        #ece6d9;
+    --ink-2:      #b3aea3;
+    --ink-3:      #837f78;
+    --rule:       #33353d;
+    --rule-soft:  #24262c;
+    --live:       #e2704f;
+    --live-soft:  #3a241d;
+    --measure:    #7fb2d4;
+    --measure-soft:#1c2b35;
+    --grid-line:  rgba(236, 230, 217, 0.05);
+    --shadow:     0 1px 0 rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #14151a;
+  --paper-2:    #1b1d23;
+  --paper-sunk: #101115;
+  --ink:        #ece6d9;
+  --ink-2:      #b3aea3;
+  --ink-3:      #837f78;
+  --rule:       #33353d;
+  --rule-soft:  #24262c;
+  --live:       #e2704f;
+  --live-soft:  #3a241d;
+  --measure:    #7fb2d4;
+  --measure-soft:#1c2b35;
+  --grid-line:  rgba(236, 230, 217, 0.05);
+  --shadow:     0 1px 0 rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--paper);
+  /* the graph rule: 8mm major, no minor -- enough to read as paper, not as a grid */
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--ink);
+  font: 400 16px/1.6 var(--serif);
+  font-optical-sizing: auto;
+}
+
+/* ---- masthead ----------------------------------------------------------- */
+
+.plate-head {
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(3px);
+  position: sticky; top: 0; z-index: 20;
+}
+
+.plate-head__inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: calc(var(--step) * 2) calc(var(--step) * 3);
+  display: flex; align-items: baseline; gap: calc(var(--step) * 2);
+  flex-wrap: wrap;
+}
+
+.plate-head h1 {
+  margin: 0;
+  font: 600 1.35rem/1.15 var(--serif);
+  font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 40;
+  letter-spacing: -0.011em;
+}
+
+.plate-no {
+  font: 500 0.68rem/1 var(--mono);
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--live);
+  border: 1px solid currentColor;
+  padding: 4px 7px 3px;
+  align-self: center;
+}
+
+.plate-head__spacer { flex: 1 1 auto; }
+
+.plate-back {
+  font: 400 0.78rem/1 var(--mono);
+  color: var(--ink-3); text-decoration: none;
+  border-bottom: 1px solid transparent;
+  align-self: center;
+}
+.plate-back:hover { color: var(--ink); border-bottom-color: var(--rule); }
+
+/* ---- theme switch ------------------------------------------------------- */
+
+.theme-switch {
+  display: inline-flex; align-items: center; align-self: center;
+  border: 1px solid var(--rule); background: var(--paper-2);
+}
+.theme-switch button {
+  font: 500 0.68rem/1 var(--mono);
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 8px; border: 0; background: none; color: var(--ink-3);
+  cursor: pointer;
+}
+.theme-switch button + button { border-left: 1px solid var(--rule-soft); }
+.theme-switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---- layout ------------------------------------------------------------- */
+
+.plate {
+  max-width: 1280px; margin: 0 auto;
+  padding: calc(var(--step) * 3);
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: calc(var(--step) * 3);
+  align-items: start;
+}
+@media (max-width: 860px) { .plate { grid-template-columns: 1fr; } }
+
+.plate--wide { grid-template-columns: minmax(0, 1fr); }
+
+.lede {
+  grid-column: 1 / -1;
+  max-width: 62ch; margin: 0 0 var(--step);
+  color: var(--ink-2); font-size: 1.02rem;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* ---- panels ------------------------------------------------------------- */
+
+.panel {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--rad);
+  padding: calc(var(--step) * 2);
+  box-shadow: var(--shadow);
+}
+.panel + .panel { margin-top: calc(var(--step) * 2); }
+
+.panel > h2, .panel-title {
+  margin: 0 0 calc(var(--step) * 1.5);
+  padding-bottom: calc(var(--step));
+  border-bottom: 1px solid var(--rule-soft);
+  font: 500 0.7rem/1 var(--mono);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.panel--sticky { position: sticky; top: 84px; }
+@media (max-width: 860px) { .panel--sticky { position: static; } }
+
+/* ---- controls ----------------------------------------------------------- */
+
+.field { margin-bottom: calc(var(--step) * 2); }
+.field:last-child { margin-bottom: 0; }
+
+.field > label,
+.field-label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--step);
+  font: 400 0.8rem/1.3 var(--mono);
+  color: var(--ink-2);
+  margin-bottom: calc(var(--step) * 0.75);
+}
+
+.field-value {
+  font: 500 0.8rem/1.3 var(--mono);
+  color: var(--live);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px; background: var(--rule); border-radius: 0;
+}
+input[type="range"]::-moz-range-track { height: 2px; background: var(--rule); }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 13px; height: 13px; margin-top: -6px;
+  background: var(--live); border: 0; border-radius: 50%;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 13px; height: 13px; background: var(--live); border: 0; border-radius: 50%;
+}
+input[type="range"]:focus-visible { outline: 2px solid var(--measure); outline-offset: 4px; }
+
+select, button, input[type="text"], input[type="number"], input[type="file"] {
+  font: 400 0.85rem/1.4 var(--mono);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--rad);
+  padding: 7px 9px;
+  width: 100%;
+}
+select:hover, button:hover { border-color: var(--ink-3); }
+button { cursor: pointer; }
+
+button.primary {
+  background: var(--ink); color: var(--paper); border-color: var(--ink);
+}
+button.primary:hover { background: var(--live); border-color: var(--live); }
+
+:where(select, button, a, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--measure); outline-offset: 2px;
+}
+
+/* segmented radio group -- replaces loose radio lists */
+.segmented { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--rule); }
+.segmented label {
+  flex: 1 1 auto; text-align: center; cursor: pointer;
+  font: 400 0.78rem/1 var(--mono);
+  padding: 8px 6px; color: var(--ink-2);
+  border-right: 1px solid var(--rule-soft);
+}
+.segmented label:last-child { border-right: 0; }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented input:checked + span { color: var(--paper); }
+.segmented label:has(input:checked) { background: var(--ink); color: var(--paper); }
+.segmented label:has(input:focus-visible) { outline: 2px solid var(--measure); outline-offset: -2px; }
+
+.check {
+  display: flex; align-items: center; gap: var(--step);
+  font: 400 0.85rem/1.4 var(--mono); color: var(--ink-2); cursor: pointer;
+}
+.check input { accent-color: var(--live); width: 15px; height: 15px; }
+
+/* ---- figures ------------------------------------------------------------ */
+
+.figs { display: grid; gap: calc(var(--step) * 3); }
+.figs--2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.figs--3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+figure { margin: 0; }
+
+figure canvas, figure img {
+  display: block; width: 100%; height: auto;
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  image-rendering: auto;
+}
+figure canvas.pixelated, figure img.pixelated { image-rendering: pixelated; }
+
+figcaption {
+  margin-top: calc(var(--step) * 0.75);
+  font: 400 0.74rem/1.45 var(--mono);
+  color: var(--ink-3);
+}
+figcaption b {
+  color: var(--live); font-weight: 500;
+  letter-spacing: .08em; text-transform: uppercase;
+  margin-right: .5em;
+}
+
+/* ---- readouts ----------------------------------------------------------- */
+
+.readout {
+  font: 400 0.8rem/1.7 var(--mono);
+  font-variant-numeric: tabular-nums;
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--rad);
+  padding: calc(var(--step) * 1.5);
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: var(--ink-2);
+}
+.readout em { color: var(--live); font-style: normal; font-weight: 500; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 1px;
+         background: var(--rule-soft); border: 1px solid var(--rule-soft); }
+.stat { background: var(--paper-2); padding: calc(var(--step) * 1.25); }
+.stat dt { font: 400 0.66rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+           color: var(--ink-3); margin: 0 0 6px; }
+.stat dd { margin: 0; font: 500 1.02rem/1 var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---- numeric grids (pooling, matmul, kernels) --------------------------- */
+
+.numgrid { display: grid; gap: 2px; justify-content: start; }
+.numgrid .cell {
+  display: flex; align-items: center; justify-content: center;
+  width: var(--cell, 38px); height: var(--cell, 38px);
+  font: 400 0.78rem/1 var(--mono); font-variant-numeric: tabular-nums;
+  background: var(--paper); border: 1px solid var(--rule-soft); color: var(--ink-2);
+  border-radius: var(--rad);
+}
+.numgrid .cell.is-source { background: var(--measure-soft); border-color: var(--measure); color: var(--ink); }
+.numgrid .cell.is-result { background: var(--live-soft); border-color: var(--live); color: var(--ink); }
+.numgrid .cell.is-dim    { opacity: .38; }
+.numgrid[data-interactive] .cell { cursor: crosshair; }
+
+.grid-label {
+  font: 400 0.7rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 calc(var(--step)) ;
+}
+
+/* ---- misc --------------------------------------------------------------- */
+
+.note {
+  border-left: 2px solid var(--live);
+  padding-left: calc(var(--step) * 1.5);
+  color: var(--ink-2); font-size: .95rem;
+  margin: calc(var(--step) * 2) 0 0;
+}
+
+.plate-foot {
+  max-width: 1280px; margin: 0 auto;
+  padding: calc(var(--step) * 3);
+  border-top: 1px solid var(--rule-soft);
+  font: 400 0.74rem/1.6 var(--mono);
+  color: var(--ink-3);
+  display: flex; gap: calc(var(--step) * 2); flex-wrap: wrap;
+}
+.plate-foot a { color: var(--ink-2); }
+
+.scroll-x { overflow-x: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}

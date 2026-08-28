@@ -3,367 +3,269 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Gamma Correction & Tone Mapping — Mini Lab</title>
-<style>
-:root{--bg:#0b0d12;--panel:#121621;--muted:#8b93a7;--text:#e9edf5;--accent:#7aa2ff}
-*{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,#0b0d12,#0e1320);color:var(--text);
-  font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;display:flex;flex-direction:column;align-items:center;min-height:100vh}
-header{padding:14px 18px;border-bottom:1px solid #1d2333;background:rgba(10,14,25,.7);backdrop-filter:saturate(140%) blur(6px);position:sticky;top:0;width:100%;z-index:10}
-h1{margin:0;font-size:18px}
-.container{max-width:1100px;width:100%;padding:16px}
-.grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
-@media (max-width:900px){.grid{grid-template-columns:1fr}}
-.panel{background:#121621;border:1px solid #242a3b;border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.panel h2{margin:0 0 8px 0;font-size:15px;color:#c9d3ef}
-.sub{color:#8b93a7;font-size:12px;margin:0 0 8px}
-label{font-size:12px;color:#b7bfd6;font-weight:600}
-.controls{display:grid;gap:10px}
-.control{display:grid;gap:6px}
-.select,input[type="file"],button{
-  width:100%;padding:10px;border-radius:10px;border:1px solid #2a3046;background:#0f1424;color:var(--text)
-}
-.range{display:flex;align-items:center;gap:10px}
-.range input[type="range"]{flex:1}
-.range .val{min-width:68px;text-align:right;font-weight:700;color:#cfe1ff}
-.stage{display:flex;gap:14px;flex-wrap:wrap}
-.canvas-wrap{position:relative;border-radius:12px;overflow:hidden;background:#0a0f1f;border:1px solid #242a3b}
-.canvas-wrap header{position:absolute;inset:auto auto 10px 10px;background:rgba(13,18,35,.9);border:1px solid #263055;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700}
-canvas{display:block;width:256px;height:256px;image-rendering:crisp-edges}
-.curve{width:512px;height:160px;display:block;background:#0e1426;border:1px solid #263055;border-radius:10px}
-.eq{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0e1426;border:1px solid #263055;border-radius:10px;padding:10px;white-space:pre-wrap}
-.badge{display:inline-flex;gap:8px;flex-wrap:wrap}
-.badge span{background:#0e1528;border:1px solid #263055;border-radius:999px;padding:5px 8px;font-size:12px}
-.small{font-size:12px;color:#8b93a7}
-</style>
+<title>Gamma &amp; Tone Mapping — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 </head>
 <body>
-<header>
-  <h1>🌗 Gamma Correction & Tone Mapping — Mini Lab</h1>
-</header>
 
-<main class="container">
-  <section class="grid">
-    <!-- Controls -->
-    <div class="panel">
+<main class="plate">
+
+  <p class="lede">
+    Pixel values are not proportional to brightness. A gamma curve is the mapping
+    between what a sensor recorded and what a screen emits &mdash; and every image
+    you load has already been through one.
+  </p>
+
+  <div>
+    <section class="panel panel--sticky">
       <h2>Controls</h2>
-      <p class="sub">Adjust gamma/exposure/black–white points. Drag & drop or upload an image, or use the samples.</p>
 
-      <div class="controls">
-        <div class="control">
-          <label>Sample</label>
-          <select id="sample" class="select">
-            <option value="gradient">Gradient (default)</option>
-            <option value="checker">Checkerboard</option>
-          </select>
-        </div>
-
-        <div class="control">
-          <label>Upload image</label>
-          <input id="file" type="file" accept="image/*"/>
-          <div class="small">Images are processed locally in your browser.</div>
-        </div>
-
-        <div class="control">
-          <label>Gamma (γ)</label>
-          <div class="range">
-            <input id="gamma" type="range" min="0.20" max="3.00" step="0.01" value="2.20"/>
-            <div class="val" id="gammaVal">2.20</div>
-          </div>
-        </div>
-
-        <div class="control">
-          <label>Exposure (stops)</label>
-          <div class="range">
-            <input id="expo" type="range" min="-3.0" max="3.0" step="0.1" value="0.0"/>
-            <div class="val" id="expoVal">0.0</div>
-          </div>
-        </div>
-
-        <div class="control">
-          <label>Black point</label>
-          <div class="range">
-            <input id="black" type="range" min="0" max="255" step="1" value="0"/>
-            <div class="val" id="blackVal">0</div>
-          </div>
-        </div>
-
-        <div class="control">
-          <label>White point</label>
-          <div class="range">
-            <input id="white" type="range" min="1" max="255" step="1" value="255"/>
-            <div class="val" id="whiteVal">255</div>
-          </div>
-        </div>
-
-        <button id="reset">Reset</button>
-      </div>
-    </div>
-
-    <!-- Visuals -->
-    <div class="panel">
-      <h2>Visualization</h2>
-      <div class="stage">
-        <div class="canvas-wrap">
-          <header>Input</header>
-          <canvas id="inC" width="256" height="256" aria-label="input"></canvas>
-        </div>
-        <div class="canvas-wrap">
-          <header>Output</header>
-          <canvas id="outC" width="256" height="256" aria-label="output"></canvas>
-        </div>
+      <div class="field">
+        <label for="sample">Source</label>
+        <select id="sample"></select>
       </div>
 
-      <div style="margin-top:10px">
-        <canvas id="curve" class="curve" width="512" height="160"></canvas>
+      <div class="field">
+        <label for="file">Or your own image</label>
+        <input id="file" type="file" accept="image/*"/>
+        <p class="note" style="margin-top:var(--step);font-size:.8rem">
+          Everything runs in your browser. Nothing is uploaded.
+        </p>
       </div>
 
-      <div class="eq" id="eqBox">
-Equation (per channel):
-1) Normalize & clamp to [0,1] using black (b) & white (w):
-   x' = clamp((x - b) / (w - b), 0, 1)
-
-2) Gamma & exposure (E in stops → scale s = 2^E):
-   y' = (x')^(1/γ) · s
-
-3) Map to 8-bit:
-   y = clamp(round(255 · y'), 0, 255)
+      <div class="field">
+        <label for="gamma">Gamma &gamma; <span class="field-value" id="gammaVal">2.20</span></label>
+        <input id="gamma" type="range" min="0.20" max="3.00" step="0.01" value="2.20"/>
       </div>
 
-      <div class="badge" style="margin-top:6px">
-        <span>γ = <strong id="bGamma">2.20</strong></span>
-        <span>Exposure = <strong id="bExpo">0.0</strong> stops</span>
-        <span>Black = <strong id="bBlack">0</strong></span>
-        <span>White = <strong id="bWhite">255</strong></span>
+      <div class="field">
+        <label for="expo">Exposure (stops) <span class="field-value" id="expoVal">0.0</span></label>
+        <input id="expo" type="range" min="-3.0" max="3.0" step="0.1" value="0.0"/>
       </div>
-    </div>
-  </section>
+
+      <div class="field">
+        <label for="black">Black point <span class="field-value" id="blackVal">0</span></label>
+        <input id="black" type="range" min="0" max="254" step="1" value="0"/>
+      </div>
+
+      <div class="field">
+        <label for="white">White point <span class="field-value" id="whiteVal">255</span></label>
+        <input id="white" type="range" min="1" max="255" step="1" value="255"/>
+      </div>
+
+      <div class="field">
+        <button type="button" id="reset">Reset</button>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Figure</h2>
+      <div class="figs figs--2">
+        <figure>
+          <canvas id="inC" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 1</b> Input, as stored.</figcaption>
+        </figure>
+        <figure>
+          <canvas id="outC" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 2</b> After the transfer curve below.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Transfer curve</h2>
+      <figure>
+        <canvas id="curve" width="640" height="220"></canvas>
+        <figcaption><b>Fig. 3</b> Input value (horizontal) against output value (vertical).
+          The dashed diagonal is the identity &mdash; no change.</figcaption>
+      </figure>
+    </section>
+
+    <section class="panel">
+      <h2>Histogram</h2>
+      <figure>
+        <canvas id="hist" width="640" height="150"></canvas>
+        <figcaption><b>Fig. 4</b> Luminance distribution: input in outline, output filled.
+          Watch values pile up at the ends when you clip.</figcaption>
+      </figure>
+    </section>
+
+    <section class="panel">
+      <h2>What is being computed</h2>
+      <div class="readout" id="eqBox"></div>
+    </section>
+  </div>
+
 </main>
 
+<script src="lab.js"></script>
 <script>
-const $ = s => document.querySelector(s);
+Lab.head({ no: 'Plate 04', title: 'Gamma & Tone Mapping' });
 
-// Elements
-const inC = $("#inC"), outC = $("#outC"), curve = $("#curve");
-const inX = inC.getContext("2d"), outX = outC.getContext("2d"), cX = curve.getContext("2d");
+const $ = Lab.$;
+const W = 320, H = 320;
+const inC = $('#inC'), outC = $('#outC'), curve = $('#curve'), hist = $('#hist');
+const inX  = inC.getContext('2d', { willReadFrequently: true });
+const outX = outC.getContext('2d');
+const cX = curve.getContext('2d'), hX = hist.getContext('2d');
 
-const sampleSel = $("#sample"), fileEl = $("#file");
-const gammaEl = $("#gamma"), expoEl = $("#expo"), blackEl = $("#black"), whiteEl = $("#white");
-const gammaVal = $("#gammaVal"), expoVal = $("#expoVal"), blackVal = $("#blackVal"), whiteVal = $("#whiteVal");
-const bGamma=$("#bGamma"), bExpo=$("#bExpo"), bBlack=$("#bBlack"), bWhite=$("#bWhite");
-const resetBtn = $("#reset");
-const eqBox = $("#eqBox");
+const gammaEl = $('#gamma'), expoEl = $('#expo'), blackEl = $('#black'), whiteEl = $('#white');
+let src = null;   // Uint8ClampedArray of the input
 
-// State
-const W=256, H=256;
-let srcRGBA = null; // Uint8ClampedArray for input
-let working = false;
+/* source picker: the bundled photographs plus two synthetic ramps */
+const sel = $('#sample');
+for (const [k, v] of Object.entries(Lab.SAMPLES)) sel.add(new Option(v.label, k));
+sel.add(new Option('Linear ramp', 'gradient'));
+sel.add(new Option('Checkerboard', 'checker'));
+sel.value = 'colour';
 
-// Utilities
-function drawSample(kind){
-  const t = document.createElement("canvas"); t.width=t.height=256;
-  const x = t.getContext("2d");
-  if(kind==="checker"){
-    const cells=16, s=256/cells;
-    for(let y=0;y<cells;y++) for(let c=0;c<cells;c++){
-      const v=((y+c)&1)?230:20; x.fillStyle=`rgb(${v},${v},${v})`; x.fillRect(c*s,y*s,s,s);
-    }
-  }else{
-    // gradient default
-    const g = x.createLinearGradient(0,0,256,0);
-    g.addColorStop(0,"#000"); g.addColorStop(1,"#fff");
-    x.fillStyle = g; x.fillRect(0,0,256,256);
-  }
-  return t;
+function ink(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
-function coverDraw(img, ctx){
-  const s=256;
-  const scale = Math.max(s/img.width, s/img.height);
-  const w = img.width*scale, h = img.height*scale;
-  const dx = (s-w)/2, dy = (s-h)/2;
-  ctx.clearRect(0,0,s,s);
-  ctx.drawImage(img, dx, dy, w, h);
-}
-function refreshInputFromCanvas(){
-  const d = inX.getImageData(0,0,W,H);
-  srcRGBA = d.data;
-}
-function applyToneMap(){
-  if(!srcRGBA) return;
-  if(working) return;
-  working = true;
-  requestAnimationFrame(()=>{
-    const g = parseFloat(gammaEl.value);
-    const E = parseFloat(expoEl.value);
-    const b = parseInt(blackEl.value,10);
-    const w = parseInt(whiteEl.value,10);
-    const s = Math.pow(2,E);
-    const rng = Math.max(1, w - b); // avoid div by zero
 
-    const out = outX.createImageData(W,H);
-    const odata = out.data;
-
-    for(let i=0;i<W*H;i++){
-      // per-channel
-      for(let c=0;c<3;c++){
-        const x = srcRGBA[i*4 + c];
-        let xp = (x - b) / rng; // normalize
-        xp = Math.max(0, Math.min(1, xp)); // clamp
-        const yp = Math.pow(xp, 1/g) * s; // gamma+exposure
-        let y = Math.round(255 * yp);
-        if(y<0) y=0; if(y>255) y=255;
-        odata[i*4 + c] = y;
+function drawSynthetic(kind) {
+  if (kind === 'checker') {
+    const cells = 16, s = W / cells;
+    for (let y = 0; y < cells; y++)
+      for (let x = 0; x < cells; x++) {
+        const v = ((y + x) & 1) ? 232 : 18;
+        inX.fillStyle = `rgb(${v},${v},${v})`;
+        inX.fillRect(x * s, y * s, s, s);
       }
-      odata[i*4 + 3] = 255;
-    }
-    outX.putImageData(out,0,0);
-
-    drawCurve(g, E, b, w);
-    updateBadges();
-    updateEquation(g,E,b,w);
-    working = false;
-  });
-}
-function drawCurve(gamma, expo, black, white){
-  const Wc = curve.width, Hc = curve.height;
-  cX.clearRect(0,0,Wc,Hc);
-
-  // grid
-  cX.strokeStyle = "#23304a";
-  cX.lineWidth = 1;
-  for(let x=0; x<=Wc; x+=64){ cX.beginPath(); cX.moveTo(x,0); cX.lineTo(x,Hc); cX.stroke(); }
-  for(let y=0; y<=Hc; y+=40){ cX.beginPath(); cX.moveTo(0,y); cX.lineTo(Wc,y); cX.stroke(); }
-
-  // axes
-  cX.strokeStyle = "#8b93a7";
-  cX.beginPath();
-  cX.moveTo(40, Hc-20); cX.lineTo(Wc-10, Hc-20);
-  cX.moveTo(40, Hc-20); cX.lineTo(40, 10);
-  cX.stroke();
-
-  // labels
-  cX.fillStyle = "#cfe1ff";
-  cX.font = "12px ui-monospace, Menlo, Consolas, monospace";
-  cX.fillText("Input (0→255)", Wc-140, Hc-6);
-  cX.save(); cX.translate(10, 30); cX.rotate(-Math.PI/2); cX.fillText("Output (0→255)", 0,0); cX.restore();
-
-  // map [0..255] -> function
-  const s = Math.pow(2,expo);
-  cX.strokeStyle = "#7aa2ff";
-  cX.lineWidth = 2;
-  cX.beginPath();
-  for(let x=0;x<=255;x++){
-    let xp = (x - black) / Math.max(1, (white - black));
-    xp = Math.max(0, Math.min(1, xp));
-    const yp = Math.pow(xp, 1/gamma) * s;
-    let y = Math.round(255 * yp);
-    if(y<0) y=0; if(y>255) y=255;
-
-    const px = 40 + (x/255)*(Wc-60);
-    const py = (Hc-20) - (y/255)*(Hc-40);
-    if(x===0) cX.moveTo(px,py); else cX.lineTo(px,py);
+  } else {
+    const g = inX.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, '#000'); g.addColorStop(1, '#fff');
+    inX.fillStyle = g; inX.fillRect(0, 0, W, H);
   }
-  cX.stroke();
+}
 
-  // black/white markers
-  cX.strokeStyle="#ff4d4d";
-  cX.setLineDash([6,4]);
-  const xb = 40 + (black/255)*(Wc-60);
-  const xw = 40 + (white/255)*(Wc-60);
-  cX.beginPath(); cX.moveTo(xb,10); cX.lineTo(xb,Hc-10); cX.stroke();
-  cX.beginPath(); cX.moveTo(xw,10); cX.lineTo(xw,Hc-10); cX.stroke();
+function cover(img) {
+  const s = Math.max(W / img.width, H / img.height);
+  const w = img.width * s, h = img.height * s;
+  inX.clearRect(0, 0, W, H);
+  inX.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+}
+
+async function setSource(what) {
+  if (what === 'gradient' || what === 'checker') drawSynthetic(what);
+  else cover(await Lab.loadImage(what));
+  src = inX.getImageData(0, 0, W, H).data;
+  render();
+}
+
+/* the mapping, in one place so the curve, the pixels and the prose agree */
+function transfer(x, g, s, b, w) {
+  const xp = Lab.clamp((x - b) / Math.max(1, w - b), 0, 1);
+  return Lab.clamp(Math.round(255 * Math.pow(xp, 1 / g) * s), 0, 255);
+}
+
+function render() {
+  if (!src) return;
+  const g = +gammaEl.value, E = +expoEl.value;
+  const b = +blackEl.value, w = +whiteEl.value;
+  const s = Math.pow(2, E);
+
+  $('#gammaVal').textContent = g.toFixed(2);
+  $('#expoVal').textContent  = E.toFixed(1);
+  $('#blackVal').textContent = b;
+  $('#whiteVal').textContent = w;
+
+  /* one lookup table, reused for all three channels and both histograms */
+  const lut = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) lut[v] = transfer(v, g, s, b, w);
+
+  const out = outX.createImageData(W, H);
+  const hIn = new Float64Array(256), hOut = new Float64Array(256);
+  for (let i = 0; i < src.length; i += 4) {
+    const r = src[i], gg = src[i + 1], bb = src[i + 2];
+    out.data[i]     = lut[r];
+    out.data[i + 1] = lut[gg];
+    out.data[i + 2] = lut[bb];
+    out.data[i + 3] = 255;
+    const li = (0.2126 * r + 0.7152 * gg + 0.0722 * bb) | 0;
+    hIn[li]++; hOut[lut[li]]++;
+  }
+  outX.putImageData(out, 0, 0);
+
+  drawCurve(lut);
+  drawHist(hIn, hOut);
+
+  $('#eqBox').innerHTML =
+`per channel, with b = ${b}, w = ${w}, γ = ${g.toFixed(2)}, E = ${E.toFixed(1)} stops
+
+1  normalise and clip     x' = clamp((x − b) / (w − b), 0, 1)
+2  gamma and exposure     y' = x'^(1/γ) · 2^E
+3  back to 8 bits         y  = clamp(round(255 · y'), 0, 255)
+
+γ &gt; 1 lifts the shadows; γ &lt; 1 crushes them.
+A stop is a doubling: E = ${E.toFixed(1)} multiplies by <em>${s.toFixed(3)}</em>.`;
+}
+
+function drawCurve(lut) {
+  const w = curve.width, h = curve.height;
+  cX.clearRect(0, 0, w, h);
+  cX.fillStyle = ink('--paper-sunk'); cX.fillRect(0, 0, w, h);
+
+  cX.strokeStyle = ink('--rule-soft'); cX.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    cX.beginPath(); cX.moveTo(i * w / 4, 0); cX.lineTo(i * w / 4, h); cX.stroke();
+    cX.beginPath(); cX.moveTo(0, i * h / 4); cX.lineTo(w, i * h / 4); cX.stroke();
+  }
+
+  cX.setLineDash([3, 4]); cX.strokeStyle = ink('--ink-3');
+  cX.beginPath(); cX.moveTo(0, h); cX.lineTo(w, 0); cX.stroke();
   cX.setLineDash([]);
-}
-function updateBadges(){
-  bGamma.textContent = parseFloat(gammaEl.value).toFixed(2);
-  bExpo.textContent  = parseFloat(expoEl.value).toFixed(1);
-  bBlack.textContent = blackEl.value;
-  bWhite.textContent = whiteEl.value;
-  gammaVal.textContent = bGamma.textContent;
-  expoVal.textContent  = bExpo.textContent;
-  blackVal.textContent = bBlack.textContent;
-  whiteVal.textContent = bWhite.textContent;
-}
-function updateEquation(g,E,b,w){
-  const s = Math.pow(2, E).toFixed(3);
-  eqBox.textContent =
-`Equation (per channel):
-1) Normalize & clamp to [0,1] using black (b) & white (w):
-   x' = clamp((x - b) / (w - b), 0, 1)      with  b = ${b}, w = ${w}
 
-2) Gamma & exposure (E in stops; s = 2^E = ${s}):
-   y' = (x')^(1/γ) · s                      with  γ = ${g.toFixed(2)}, E = ${E.toFixed(1)} stops
-
-3) Map to 8-bit:
-   y  = clamp(round(255 · y'), 0, 255)`;
-}
-
-// Wiring
-sampleSel.addEventListener("change", ()=>{
-  const t = drawSample(sampleSel.value);
-  const img = new Image();
-  img.onload=()=>{
-    coverDraw(img, inX);
-    refreshInputFromCanvas();
-    applyToneMap();
-  };
-  img.src = t.toDataURL();
-});
-fileEl.addEventListener("change", e=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  const img = new Image();
-  img.onload=()=>{
-    coverDraw(img, inX);
-    refreshInputFromCanvas();
-    applyToneMap();
-  };
-  img.src = URL.createObjectURL(f);
-});
-
-// Drag & drop
-document.addEventListener("dragover", e=>{ e.preventDefault(); document.body.style.background="rgba(122,162,255,0.08)"; });
-document.addEventListener("dragleave", ()=>{ document.body.style.background=""; });
-document.addEventListener("drop", e=>{
-  e.preventDefault(); document.body.style.background="";
-  const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(!f) return;
-  const img = new Image();
-  img.onload=()=>{
-    coverDraw(img, inX);
-    refreshInputFromCanvas();
-    applyToneMap();
-  };
-  img.src = URL.createObjectURL(f);
-});
-
-// Sliders
-[gammaEl, expoEl, blackEl, whiteEl].forEach(el=> el.addEventListener("input", ()=>{
-  // keep black <= white
-  if(parseInt(blackEl.value,10) >= parseInt(whiteEl.value,10)){
-    if(el===blackEl) whiteEl.value = Math.min(255, parseInt(blackEl.value,10)+1);
-    else blackEl.value = Math.max(0, parseInt(whiteEl.value,10)-1);
+  cX.strokeStyle = ink('--live'); cX.lineWidth = 2;
+  cX.beginPath();
+  for (let v = 0; v < 256; v++) {
+    const x = v / 255 * w, y = h - lut[v] / 255 * h;
+    v ? cX.lineTo(x, y) : cX.moveTo(x, y);
   }
-  updateBadges();
-  applyToneMap();
-}));
+  cX.stroke();
+}
 
-resetBtn.addEventListener("click", ()=>{
-  gammaEl.value="2.20"; expoEl.value="0.0"; blackEl.value="0"; whiteEl.value="255";
-  updateBadges(); applyToneMap();
+function drawHist(a, b) {
+  const w = hist.width, h = hist.height;
+  hX.clearRect(0, 0, w, h);
+  hX.fillStyle = ink('--paper-sunk'); hX.fillRect(0, 0, w, h);
+  const max = Math.max(...a, ...b) || 1;
+  const bar = w / 256;
+
+  hX.fillStyle = ink('--live');
+  for (let v = 0; v < 256; v++) {
+    const y = b[v] / max * (h - 6);
+    hX.fillRect(v * bar, h - y, Math.max(1, bar), y);
+  }
+  hX.strokeStyle = ink('--measure'); hX.lineWidth = 1;
+  hX.beginPath();
+  for (let v = 0; v < 256; v++) {
+    const y = h - a[v] / max * (h - 6);
+    v ? hX.lineTo(v * bar, y) : hX.moveTo(v * bar, y);
+  }
+  hX.stroke();
+}
+
+[gammaEl, expoEl, blackEl, whiteEl].forEach(el => el.addEventListener('input', render));
+sel.addEventListener('change', () => setSource(sel.value));
+$('#file').addEventListener('change', async e => {
+  if (e.target.files[0]) { cover(await Lab.loadImage(e.target.files[0]));
+                           src = inX.getImageData(0, 0, W, H).data; render(); }
 });
+$('#reset').addEventListener('click', () => {
+  gammaEl.value = 2.2; expoEl.value = 0; blackEl.value = 0; whiteEl.value = 255; render();
+});
+/* the canvases are painted with theme colours, so repaint when the theme flips */
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
 
-// Init
-(function init(){
-  updateBadges();
-  const t = drawSample("gradient");
-  const img = new Image();
-  img.onload=()=>{
-    coverDraw(img, inX);
-    refreshInputFromCanvas();
-    applyToneMap();
-  };
-  img.src = t.toDataURL();
-})();
+setSource(sel.value);
+Lab.foot();
 </script>
 </body>
 </html>
-

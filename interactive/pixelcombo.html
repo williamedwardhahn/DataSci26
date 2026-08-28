@@ -3,231 +3,212 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Image Combinatorics — Hyperastronomical Numbers Explorer</title>
+<title>Image Combinatorics — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 <style>
-:root{
-  --bg:#0b0d12;--panel:#121621;--muted:#8b93a7;--text:#e9edf5;
-  --accent:#7aa2ff;--accent-2:#ff4d4d;--success:#4caf50;
-}
-body{margin:0;background:linear-gradient(180deg,#0b0d12,#0e1320);
-  color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-  display:flex;flex-direction:column;align-items:center;min-height:100vh;}
-header{display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px;border-bottom:1px solid #1d2333;background:rgba(10,14,25,.7);
-  backdrop-filter:saturate(140%) blur(6px);position:sticky;top:0;width:100%;max-width:1400px;z-index:10;}
-h1{font-size:20px;margin:0;font-weight:700}
-.stack{display:flex;gap:8px;flex-wrap:wrap}
-.badge{background:#1a2545;border:1px solid #2b3552;border-radius:999px;font-size:12px;padding:6px 10px}
-.badge.success{background:#1a3d1a;border-color:#2d5a2d;color:#90ee90}
-.container{max-width:1400px;margin:20px auto;padding:0 16px;width:100%}
-.row{display:grid;grid-template-columns:360px 1fr;gap:18px}
-@media(max-width:768px){.row{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid #242a3b;border-radius:14px;
-  padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.panel h2{margin:0 0 8px;font-size:16px;color:#bfc7dc}
-label{font-size:13px;color:#b7bfd6;font-weight:500}
-input,select{width:100%;padding:8px 10px;border-radius:8px;
-  border:1px solid #2a3046;background:#0f1424;color:var(--text)}
-input[type=range]{cursor:pointer}
-.range{display:flex;align-items:center;gap:8px}
-.range span{min-width:80px;text-align:right}
-canvas{background:#0c1220;border:1px solid #242a3b;border-radius:12px;
-  box-shadow:0 4px 20px rgba(0,0,0,.2);display:block;margin:auto}
-.output{
-  margin-top:16px;
-  font-size:15px;
-  line-height:1.6;
-  color:#e9edf5;
-  background:#0e1426;
-  padding:18px;
-  border-radius:14px;
-  white-space:pre-wrap;
-  border:1px solid #263055;
-  box-shadow:0 6px 20px rgba(0,0,0,.35);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  max-height: 260px;       /* limit height */
-  overflow-y: auto;        /* scroll if too big */
-}
-.output strong{color:var(--accent);font-weight:700}
-.palette{display:grid;grid-template-columns:repeat(auto-fill,24px);gap:4px;
-  margin-top:10px;max-height:200px;overflow:auto}
-.palette div{width:24px;height:24px;border-radius:4px;border:1px solid #333}
-.radio-row{display:flex;gap:8px;margin-top:8px}
-.radio-row label{display:flex;gap:4px;align-items:center;font-size:13px;cursor:pointer}
-.toggle{margin-top:12px;font-size:13px;color:#b7bfd6;cursor:pointer;user-select:none}
-.footer{margin:30px auto;text-align:center;color:var(--muted);max-width:600px;font-size:13px}
+  .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(14px, 1fr));
+             gap: 1px; border: 1px solid var(--rule-soft); padding: 1px; }
+  .palette div { aspect-ratio: 1; }
+  .scale { border-collapse: collapse; width: 100%; font: 400 0.78rem/1.5 var(--mono);
+           font-variant-numeric: tabular-nums; }
+  .scale th { text-align: left; font-weight: 500; color: var(--ink-3);
+              font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase;
+              border-bottom: 1px solid var(--rule); padding: 0 0 6px; }
+  .scale td { padding: 7px 0; border-bottom: 1px solid var(--rule-soft); color: var(--ink-2); }
+  .scale td:last-child { text-align: right; }
+  .scale tr[data-passed="yes"] td { color: var(--live); }
+  .scale tr.you td { color: var(--ink); font-weight: 500; }
+  .scale tr.you td:first-child::before { content: "▸ "; color: var(--live); }
 </style>
 </head>
 <body>
-<header>
-  <h1>🧮 Image Combinatorics — Hyperastronomical Numbers</h1>
-  <div class="stack">
-    <span class="badge">📷 Match bit depth</span>
-    <span class="badge">🎨 Gray vs RGB</span>
-    <span class="badge success">✨ Palettes & growth</span>
-  </div>
-</header>
 
-<main class="container">
-  <section class="row">
-    <div class="panel">
-      <h2>Step 1 — Parameters</h2>
-      <div>
-        <label>Image dimensions (pixels)</label>
-        <div class="range">
-          <input id="dim" type="range" min="2" max="64" value="8">
-          <span id="dimLabel">8 × 8</span>
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <label>Bit depth per pixel</label>
-        <div class="range">
-          <input id="bits" type="range" min="1" max="12" value="4">
-          <span id="bitsLabel">4 bits (16 colors)</span>
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <label>Mode</label>
-        <div class="radio-row">
-          <label><input type="radio" name="mode" value="gray" checked>Gray</label>
-          <label><input type="radio" name="mode" value="rgb">RGB</label>
-        </div>
-      </div>
-    </div>
+<main class="plate">
 
-    <div class="panel">
-      <h2>Step 2 — Visualization</h2>
-      <canvas id="canvas" width="256" height="256"></canvas>
-      <div class="output" id="outputBox"></div>
-      <div class="toggle" id="toggleForm">🔀 Switch to Expanded Numbers</div>
-      <h3 style="margin-top:10px;color:#bfc7dc;font-size:14px">Palette</h3>
-      <div class="palette" id="paletteBox"></div>
-    </div>
-  </section>
-
-  <p class="footer">
-    See how palette size explodes with bit depth. Even tiny images quickly reach 
-    hyperastronomical possibilities — more than atoms in the universe!
+  <p class="lede">
+    How many different images of a given size exist? The count is
+    <strong>(2<sup>bits</sup>)<sup>pixels</sup></strong>, and it leaves the physical
+    universe behind almost immediately. This is why you cannot find a good image by searching.
   </p>
+
+  <div>
+    <section class="panel panel--sticky">
+      <h2>Parameters</h2>
+
+      <div class="field">
+        <label for="dim">Image size <span class="field-value" id="dimLabel">8 × 8</span></label>
+        <input id="dim" type="range" min="2" max="64" value="8">
+      </div>
+
+      <div class="field">
+        <label for="bits">Bits per pixel <span class="field-value" id="bitsLabel">4</span></label>
+        <input id="bits" type="range" min="1" max="12" value="4">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Channel</span>
+        <div class="segmented" role="radiogroup" aria-label="Channel">
+          <label><input type="radio" name="mode" value="gray" checked><span>Grayscale</span></label>
+          <label><input type="radio" name="mode" value="rgb"><span>RGB</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <button type="button" id="reroll">Draw another</button>
+      </div>
+
+      <dl class="stats">
+        <div class="stat"><dt>Pixels</dt><dd id="statPix">64</dd></div>
+        <div class="stat"><dt>Palette</dt><dd id="statPal">16</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Figure</h2>
+      <div class="figs figs--2">
+        <figure>
+          <canvas id="canvas" width="256" height="256" class="pixelated"></canvas>
+          <figcaption><b>Fig. 1</b> One image drawn uniformly at random from the space below.</figcaption>
+        </figure>
+        <figure>
+          <div class="palette" id="paletteBox"></div>
+          <figcaption><b>Fig. 2</b> <span id="palCap">The palette every pixel chooses from.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>The count</h2>
+      <div class="readout" id="outputBox"></div>
+    </section>
+
+    <section class="panel">
+      <h2>For scale</h2>
+      <table class="scale">
+        <thead><tr><th>Quantity</th><th>Roughly</th></tr></thead>
+        <tbody id="scaleBody"></tbody>
+      </table>
+      <p class="note" id="verdict"></p>
+    </section>
+  </div>
+
 </main>
 
+<script src="lab.js"></script>
 <script>
-const dimEl=document.getElementById("dim");
-const bitsEl=document.getElementById("bits");
-const dimLabel=document.getElementById("dimLabel");
-const bitsLabel=document.getElementById("bitsLabel");
-const outputBox=document.getElementById("outputBox");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const paletteBox=document.getElementById("paletteBox");
-const toggleForm=document.getElementById("toggleForm");
-let mode="gray";
-let expanded=false;
+Lab.head({ no: 'Plate 05', title: 'Image Combinatorics' });
 
-document.querySelectorAll("input[name=mode]").forEach(r=>{
-  r.addEventListener("change",()=>{mode=r.value;update();});
-});
+const $ = Lab.$;
+const dimEl = $('#dim'), bitsEl = $('#bits');
+const canvas = $('#canvas'), ctx = canvas.getContext('2d');
 
-toggleForm.addEventListener("click",()=>{
-  expanded=!expanded;
-  toggleForm.textContent=expanded?"🔀 Switch to Compact Form":"🔀 Switch to Expanded Numbers";
-  update();
-});
+/* Reference magnitudes, as powers of ten. */
+const SCALE = [
+  ['Grains of sand on Earth',        19],
+  ['Atoms in a human body',          27],
+  ['Stars in the observable universe',24],
+  ['Atoms in the observable universe',80],
+  ['Legal chess games (Shannon)',    120],
+  ['Planck volumes in the universe', 185],
+];
 
-function big10pow(n){
-  return "1" + "0".repeat(n);
+const mode = () => document.querySelector('input[name=mode]:checked').value;
+
+/* Split a bit budget across three channels without ever going negative --
+   the original split could hand blue a count of -1 bits at low depths. */
+function channelBits(bits) {
+  const r = Math.ceil(bits / 3);
+  const g = Math.ceil((bits - r) / 2);
+  return [r, g, bits - r - g];
 }
 
-function makePalette(bits,mode){
-  let colors=[];
-  if(mode==="gray"){
-    let levels=2**bits;
-    for(let i=0;i<levels;i++){
-      let v=Math.round(255*i/(levels-1));
-      colors.push(`rgb(${v},${v},${v})`);
+function palette(bits, m) {
+  const out = [];
+  if (m === 'gray') {
+    const levels = 2 ** bits;
+    for (let i = 0; i < levels; i++) {
+      const v = levels === 1 ? 0 : Math.round(255 * i / (levels - 1));
+      out.push(`rgb(${v},${v},${v})`);
     }
-  }else{
-    const br=Math.max(1,Math.floor(bits/3));
-    const bg=br, bb=bits-br-bg;
-    const rLevels=2**br,gLevels=2**bg,bLevels=2**bb;
-    for(let r=0;r<rLevels;r++){
-      for(let g=0;g<gLevels;g++){
-        for(let b=0;b<bLevels;b++){
-          const rv=Math.round(255*r/(rLevels-1));
-          const gv=Math.round(255*g/(gLevels-1));
-          const bv=Math.round(255*b/(bLevels-1));
-          colors.push(`rgb(${rv},${gv},${bv})`);
-          if(colors.length>512) return colors;
-        }
+    return out;
+  }
+  const [br, bg, bb] = channelBits(bits);
+  const step = (i, n) => n <= 1 ? 0 : Math.round(255 * i / (n - 1));
+  const R = 2 ** br, G = 2 ** bg, B = 2 ** bb;
+  for (let r = 0; r < R; r++)
+    for (let g = 0; g < G; g++)
+      for (let b = 0; b < B; b++) {
+        out.push(`rgb(${step(r, R)},${step(g, G)},${step(b, B)})`);
+        if (out.length >= 4096) return out;
       }
-    }
-  }
-  return colors;
+  return out;
 }
 
-function update(){
-  const d=parseInt(dimEl.value);
-  const bits=parseInt(bitsEl.value);
-  dimLabel.textContent=`${d} × ${d}`;
-  bitsLabel.textContent=`${bits} bits`;
-
-  const pixels=d*d;
-  const paletteSize=2**bits;
-  const log10Images=pixels*bits*Math.LOG10E*Math.log(2);
-  const exp=Math.floor(log10Images);
-
-  let str=`Pixels: <strong>${pixels}</strong>\n`;
-  str+=`Palette size: <strong>${paletteSize}</strong>\n\n`;
-  str+=`Equation: (2^bits)^(pixels) = (2^${bits})^${pixels} = (${paletteSize})^${pixels}\n\n`;
-
-  if(expanded){
-    str+=`Total distinct images = ${big10pow(exp)}\n\n`;
-    str+=`Atoms in universe ≈ ${big10pow(80)}\n`;
-    str+=`Chess games ≈ ${big10pow(120)}\n`;
-  }else{
-    str+=`Total distinct images ≈ <strong>10^${exp.toLocaleString()}</strong>\n\n`;
-    str+=`Atoms in universe ~<strong>10^80</strong>\n`;
-    str+=`Chess games ~<strong>10^120</strong>\n`;
-  }
-  if(exp>80) str+=`→ <strong>Exceeds universe atoms!</strong>\n`;
-  if(exp>120) str+=`→ <strong>Surpasses chess games!</strong>\n`;
-
-  outputBox.innerHTML=str;
-
-  // draw random image
-  const size=canvas.width;
-  const cell=size/d;
-  const pal=makePalette(bits,mode);
-  for(let y=0;y<d;y++){
-    for(let x=0;x<d;x++){
-      const color=pal[Math.floor(Math.random()*pal.length)];
-      ctx.fillStyle=color;
-      ctx.fillRect(x*cell,y*cell,cell,cell);
+function draw(d, pal) {
+  const cell = canvas.width / d;
+  for (let y = 0; y < d; y++)
+    for (let x = 0; x < d; x++) {
+      ctx.fillStyle = pal[Math.floor(Math.random() * pal.length)];
+      ctx.fillRect(x * cell, y * cell, Math.ceil(cell), Math.ceil(cell));
     }
-  }
+}
 
-  paletteBox.innerHTML="";
-  pal.forEach(c=>{
-    const div=document.createElement("div");
-    div.style.background=c;
-    paletteBox.appendChild(div);
+function update(redraw = true) {
+  const d = +dimEl.value, bits = +bitsEl.value, m = mode();
+  const pixels = d * d;
+  const paletteSize = 2 ** bits;
+  /* log10 of (2^bits)^pixels, done in logs so it never overflows */
+  const exp = Math.floor(pixels * bits * Math.log10(2));
+
+  $('#dimLabel').textContent = `${d} × ${d}`;
+  $('#bitsLabel').textContent = `${bits} (${paletteSize.toLocaleString()} levels)`;
+  $('#statPix').textContent = pixels.toLocaleString();
+  $('#statPal').textContent = paletteSize.toLocaleString();
+
+  const pal = palette(bits, m);
+  if (redraw) draw(d, pal);
+
+  $('#paletteBox').innerHTML = '';
+  pal.slice(0, 1024).forEach(c => {
+    const el = document.createElement('div');
+    el.style.background = c;
+    $('#paletteBox').append(el);
   });
-  if((mode==="rgb" && pal.length>=512)||(mode==="gray" && pal.length>256)){
-    const note=document.createElement("div");
-    note.style.gridColumn="1/-1";
-    note.style.fontSize="11px";
-    note.style.color="#8b93a7";
-    note.textContent=`Showing first ${pal.length} colors`;
-    paletteBox.appendChild(note);
-  }
+  $('#palCap').textContent = pal.length > 1024
+    ? `First 1,024 of ${pal.length.toLocaleString()} colours.`
+    : `All ${pal.length.toLocaleString()} colour${pal.length === 1 ? '' : 's'} a pixel can take.`;
+
+  $('#outputBox').innerHTML =
+    `pixels          ${pixels.toLocaleString()}\n` +
+    `values / pixel  ${paletteSize.toLocaleString()}   (2^${bits})\n\n` +
+    `distinct images = (2^${bits})^${pixels.toLocaleString()}\n` +
+    `                = 2^${(pixels * bits).toLocaleString()}\n` +
+    `                &asymp; <em>10^${exp.toLocaleString()}</em>`;
+
+  const rows = SCALE.map(([label, e]) =>
+    `<tr data-passed="${exp > e ? 'yes' : 'no'}"><td>${label}</td><td>10<sup>${e}</sup></td></tr>`);
+  rows.push(`<tr class="you"><td>Images this size</td><td>10<sup>${exp.toLocaleString()}</sup></td></tr>`);
+  $('#scaleBody').innerHTML = rows.join('');
+
+  const beaten = SCALE.filter(([, e]) => exp > e).length;
+  $('#verdict').textContent = beaten === 0
+    ? 'Still a countable space — for now. Push the size slider.'
+    : beaten === SCALE.length
+      ? 'Larger than every quantity above, combined and then some. No search will ever reach it — which is the whole argument for learning a model instead.'
+      : `Already larger than ${beaten} of the ${SCALE.length} quantities above.`;
 }
 
-dimEl.addEventListener("input",update);
-bitsEl.addEventListener("input",update);
+[dimEl, bitsEl].forEach(el => el.addEventListener('input', () => update(true)));
+Lab.$$('input[name=mode]').forEach(r => r.addEventListener('change', () => update(true)));
+$('#reroll').addEventListener('click', () => update(true));
+
 update();
+Lab.foot();
 </script>
 </body>
 </html>
-

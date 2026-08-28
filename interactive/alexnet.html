@@ -1,176 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AlexNet Teaching Lab — Interactive Architecture & Shapes</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlexNet — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 <style>
-:root{
-  --bg:#0b0d12;--panel:#121621;--muted:#8b93a7;--text:#e9edf5;
-  --accent:#7aa2ff;--accent-2:#ff4d4d;--success:#4caf50;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;background:linear-gradient(180deg,#0b0d12,#0e1320);color:var(--text);
-  font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-  display:flex;flex-direction:column;align-items:center;min-height:100vh
-}
-header{
-  display:flex;gap:16px;align-items:center;justify-content:space-between;
-  padding:16px 20px;border-bottom:1px solid #1d2333;background:rgba(10,14,25,.7);
-  backdrop-filter:saturate(140%) blur(6px);position:sticky;top:0;z-index:10;width:100%;max-width:1400px
-}
-h1{font-size:20px;margin:0;font-weight:700}
-.badge{background:#1a2545;border:1px solid #2b3552;border-radius:999px;font-size:12px;padding:6px 10px}
-.badge.success{background:#1a3d1a;border-color:#2d5a2d;color:#90ee90}
-.container{max-width:1400px;margin:18px auto;padding:0 16px;width:100%}
-.grid{
-  display:grid;grid-template-columns:340px 1fr;gap:18px
-}
-@media (max-width: 980px){.grid{grid-template-columns:1fr}}
-.panel{
-  background:var(--panel);border:1px solid #242a3b;border-radius:14px;padding:14px 16px;
-  box-shadow:0 8px 26px rgba(0,0,0,.25)
-}
-.panel h2{margin:0 0 8px;font-size:16px;color:#bfc7dc}
-.sub{font-size:12px;color:var(--muted);margin:2px 0 10px}
-.controls{display:grid;gap:12px}
-.control{display:grid;gap:6px}
-label{font-size:12px;color:#b7bfd6;font-weight:600}
-select,input[type="file"],button{
-  width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3046;background:#0f1424;color:var(--text)
-}
-.range{display:flex;gap:10px;align-items:center}
-.range input[type="range"]{flex:1;cursor:pointer}
-.range .val{min-width:72px;text-align:right;font-weight:600;color:#cfe1ff}
-.toggles{display:flex;gap:8px;flex-wrap:wrap}
-.toggles label{display:flex;gap:6px;align-items:center;background:#0f1424;border:1px solid #2a3046;border-radius:999px;padding:7px 10px;font-size:12px}
-.toggles input{accent-color:#6f92ff}
-.small{font-size:12px;color:#9fb0d6}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13px}
-.kv div:nth-child(odd){color:#9fb0d6}
-.stage{display:flex;gap:16px;flex-wrap:wrap}
-.canvas-wrap{position:relative;border-radius:14px;overflow:hidden;background:#0a0f1f;border:1px solid #242a3b;box-shadow:0 4px 20px rgba(0,0,0,.25)}
-.canvas-wrap header{position:absolute;inset:auto auto 10px 10px;background:rgba(13,18,35,.9);border:1px solid #263055;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
-canvas{display:block;width:256px;height:256px;image-rendering:crisp-edges}
-.table{width:100%;border-collapse:collapse;font-size:13px}
-.table th,.table td{border-bottom:1px solid #242a3b;padding:8px 10px;text-align:left}
-.table th{color:#cbd5f5;font-weight:700;background:#151a2a;position:sticky;top:0}
-.table tr:hover td{background:#121a2c}
-.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.badgePill{background:#0e1528;border:1px solid #263055;border-radius:999px;padding:6px 10px;font-size:12px}
-.footer{margin:28px auto;color:var(--muted);font-size:13px;text-align:center;max-width:780px}
-.note{font-size:12px;color:#8b93a7}
-hr.sep{border:0;border-top:1px solid #24304a;margin:12px 0}
+  .badgePill { display:inline-block; font:400 .72rem/1 var(--mono); color:var(--ink-2);
+               border:1px solid var(--rule); padding:6px 8px; margin:0 6px 6px 0; }
+  table.shape { border-collapse:collapse; width:100%; font:400 .74rem/1.5 var(--mono);
+                font-variant-numeric:tabular-nums; }
+  table.shape th { position:sticky; top:0; background:var(--paper-2); text-align:left;
+                   font-weight:500; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+                   color:var(--ink-3); border-bottom:1px solid var(--rule); padding:8px 10px 6px; }
+  table.shape td { padding:6px 10px; border-bottom:1px solid var(--rule-soft); color:var(--ink-2);
+                   white-space:nowrap; }
+  table.shape tr:hover td { background:var(--paper-sunk); color:var(--ink); }
+  .tablewrap { max-height:460px; overflow:auto; border:1px solid var(--rule-soft); }
 </style>
 </head>
 <body>
-<header>
-  <h1>👟 AlexNet Teaching Lab</h1>
-  <div class="badge success">Shapes • Params • FLOPs • Receptive Field</div>
-</header>
 
-<main class="container">
-  <section class="grid">
-    <!-- LEFT: inputs & explainer -->
-    <div class="panel">
-      <h2>Step 1 — Choose input & presets</h2>
-      <p class="sub">Load an image (scaled to AlexNet size), then explore layers and math.</p>
-      <div class="controls">
-        <div class="control">
-          <label>Sample image</label>
-          <select id="imgPick">
-            <option value="dogs">Dog Breeds (color)</option>
-            <option value="portrait">Portrait</option>
-            <option value="checker">Checkerboard</option>
-            <option value="gradient">Gradient</option>
-          </select>
-        </div>
-        <div class="control">
-          <label>Upload image</label>
-          <input id="file" type="file" accept="image/*">
-        </div>
-        <div class="control">
-          <label>Input size (AlexNet used 227×227)</label>
-          <div class="range">
-            <input id="inSize" type="range" min="96" max="256" value="227">
-            <span class="val" id="inSizeVal">227×227</span>
-          </div>
-        </div>
-        <div class="toggles">
-          <label><input id="gray" type="checkbox"> Force grayscale (toy conv runs faster)</label>
-        </div>
+<main class="plate">
+
+  <p class="lede">
+    AlexNet in 2012 was eight learned layers and sixty million parameters. Every shape below
+    follows from one formula, <strong>&lfloor;(n &minus; k + 2p)/s&rfloor; + 1</strong>, applied
+    over and over. Change the input size and watch the whole network resize.
+  </p>
+
+  <div>
+    <section class="panel panel--sticky">
+      <h2>Controls</h2>
+
+      <div class="field">
+        <label for="inSize">Input side <span class="field-value" id="inSizeVal">224</span></label>
+        <input id="inSize" type="range" min="64" max="512" step="16" value="224">
       </div>
 
-      <hr class="sep">
-      <h2>What is AlexNet?</h2>
-      <div class="kv">
-        <div>Paper</div><div>Krizhevsky, Sutskever, Hinton (2012)</div>
-        <div>Key ideas</div><div>Large kernels early (11×11 s4), ReLU, LRN, MaxPool, deep conv stack, big FC layers, Dropout</div>
-        <div>Input</div><div>~227×227×3 image</div>
-        <div>Output</div><div>1000-way ImageNet classification</div>
+      <div class="field">
+        <label for="imgPick">Sample image</label>
+        <select id="imgPick"></select>
       </div>
-      <div class="badges">
-        <span class="badgePill">ReLU nonlinearity</span>
-        <span class="badgePill">Local Response Norm (LRN)</span>
-        <span class="badgePill">MaxPool 3×3 s2</span>
-        <span class="badgePill">Dropout in FC</span>
-      </div>
-    </div>
 
-    <!-- RIGHT: calculators & visualizer -->
-    <div class="panel">
-      <h2>Step 2 — Shapes, Params, FLOPs, Receptive Field</h2>
-      <p class="sub">These are computed live from the classic AlexNet hyperparameters.</p>
-      <div style="overflow:auto; max-height:360px">
-        <table class="table" id="shapeTable">
+      <div class="field">
+        <label for="file">Or your own</label>
+        <input id="file" type="file" accept="image/*">
+      </div>
+
+      <div class="field">
+        <label class="check"><input type="checkbox" id="gray"> Show first layer in grayscale</label>
+      </div>
+
+      <div class="field">
+        <div id="totals"></div>
+      </div>
+
+      <p class="note">
+        Conv layers hold few parameters and do most of the arithmetic. The fully connected
+        layers are the reverse &mdash; fc6 alone is over half the network's weights.
+      </p>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>First layer, on a real image</h2>
+      <div class="figs figs--3">
+        <figure>
+          <canvas id="inCanvas" width="224" height="224"></canvas>
+          <figcaption><b>Fig. 1</b> Input, resized to the network's expected square.</figcaption>
+        </figure>
+        <figure>
+          <canvas id="convCanvas" width="224" height="224"></canvas>
+          <figcaption><b>Fig. 2</b> Response of an 11&times;11 oriented filter, stride 4.</figcaption>
+        </figure>
+        <figure>
+          <canvas id="poolCanvas" width="224" height="224"></canvas>
+          <figcaption><b>Fig. 3</b> After 3&times;3 max pooling, stride 2.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Layer by layer</h2>
+      <div class="tablewrap">
+        <table class="shape" id="shapeTable">
           <thead><tr>
-            <th>Layer</th><th>Kernel / Stride / Pad</th><th>In (H×W×C)</th><th>Out (H×W×C)</th><th>Params</th><th>FLOPs (≈)</th><th>RF</th>
+            <th>Layer</th><th>Output</th><th>Kernel</th><th>Stride</th><th>Pad</th>
+            <th>Params</th><th>MACs</th><th>Receptive field</th>
           </tr></thead>
           <tbody></tbody>
         </table>
       </div>
-      <div class="badges" id="totals"></div>
+      <figcaption style="margin-top:calc(var(--step)*1.5)">
+        <b>Tab. 1</b> Receptive field is how much of the original image one unit can see.
+        By conv5 a single unit is looking at most of the picture.
+      </figcaption>
+    </section>
+  </div>
 
-      <hr class="sep">
-      <h2>Step 3 — Toy forward pass (Conv1 → ReLU → Pool1)</h2>
-      <p class="sub">We apply a small set of handcrafted Conv1-like filters to illustrate feature maps (for speed).</p>
-      <div class="stage">
-        <div class="canvas-wrap">
-          <header>Input</header>
-          <canvas id="inCanvas" width="256" height="256"></canvas>
-        </div>
-        <div class="canvas-wrap">
-          <header>Conv1 (toy)</header>
-          <canvas id="convCanvas" width="256" height="256"></canvas>
-        </div>
-        <div class="canvas-wrap">
-          <header>After Pool1</header>
-          <canvas id="poolCanvas" width="256" height="256"></canvas>
-        </div>
-      </div>
-      <p class="note">Note: Real AlexNet uses 96 learned 11×11×3 filters at stride 4 (we show a tiny subset on a downscaled buffer).</p>
-    </div>
-  </section>
-
-  <p class="footer">
-    Try changing the input size to see how every layer’s <strong>spatial size, parameter count, FLOPs, and receptive field</strong> change.  
-    The toy forward pass demonstrates how early filters respond to edges and textures, and how pooling reduces resolution while gaining invariance.
-  </p>
 </main>
 
+<script src="lab.js"></script>
 <script>
+Lab.head({ no: 'Plate 09', title: 'AlexNet' });
+</script>
+<script>
+
 // ---------- DOM helpers ----------
 const $$ = s => document.querySelector(s);
 const $$$ = s => Array.from(document.querySelectorAll(s));
 
 // ---------- Sample images ----------
-const IMG = {
-  dogs:"https://upload.wikimedia.org/wikipedia/commons/1/18/Dog_Breeds.jpg",
-  portrait:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Human_faces.jpg/1280px-Human_faces.jpg",
-  checker:null,
-  gradient:null
-};
+const IMG = Object.fromEntries(
+  Object.entries(Lab.SAMPLES).map(([k, v]) => [k, v.src]).concat([['checker', null], ['gradient', null]]));
+
+// fill the sample picker from the shared registry
+{
+  const sel = document.querySelector('#imgPick');
+  for (const [k, v] of Object.entries(Lab.SAMPLES)) sel.add(new Option(v.label, k));
+  sel.add(new Option('Checkerboard', 'checker'));
+  sel.add(new Option('Gradient', 'gradient'));
+  sel.value = 'portrait';
+}
 
 // ---------- AlexNet canonical hyperparams ----------
 const AlexNet = [
@@ -516,7 +472,8 @@ function init(){
   loadSample("dogs");
 }
 init();
+
 </script>
+<script>Lab.foot();</script>
 </body>
 </html>
-

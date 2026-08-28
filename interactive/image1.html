@@ -3,186 +3,130 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Image Basics Lab — Core Properties Dashboard</title>
+<title>Image Basics — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 <style>
-:root{
-  --bg:#0b0d12;--panel:#121621;--muted:#8b93a7;--text:#e9edf5;
-  --accent:#7aa2ff;--accent-2:#ff4d4d;--success:#4caf50;
-}
-*{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,#0b0d12,#0e1320);color:var(--text);
-  font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-  display:flex;flex-direction:column;align-items:center;min-height:100vh}
-header{display:flex;gap:16px;align-items:center;justify-content:space-between;
-  padding:16px 20px;border-bottom:1px solid #1d2333;background:rgba(10,14,25,.7);
-  backdrop-filter:saturate(140%) blur(6px);position:sticky;top:0;z-index:10;width:100%;max-width:1400px}
-h1{font-size:20px;margin:0;font-weight:700}
-.badge{background:#1a2545;border:1px solid #2b3552;border-radius:999px;font-size:12px;padding:6px 10px}
-.badge.success{background:#1a3d1a;border-color:#2d5a2d;color:#90ee90}
-.container{max-width:1400px;margin:18px auto;padding:0 16px;width:100%}
-.row{display:grid;grid-template-columns:380px 1fr;gap:18px}
-@media (max-width: 920px){.row{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid #242a3b;border-radius:14px;padding:14px 16px;box-shadow:0 8px 26px rgba(0,0,0,.25)}
-.panel h2{margin:0 0 8px;font-size:16px;color:#bfc7dc}
-.sub{font-size:12px;color:var(--muted);margin:2px 0 10px}
-.controls{display:grid;gap:12px}
-.control{display:grid;gap:6px}
-label{font-size:12px;color:#b7bfd6;font-weight:600}
-select,input[type="file"],button{
-  width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3046;background:#0f1424;color:var(--text)}
-.range{display:flex;gap:10px;align-items:center}
-.range input[type="range"]{flex:1;cursor:pointer}
-.range .val{min-width:70px;text-align:right;font-weight:600;color:#cfe1ff}
-.toggles{display:flex;gap:8px;flex-wrap:wrap}
-.toggles label{display:flex;gap:6px;align-items:center;background:#0f1424;border:1px solid #2a3046;border-radius:999px;padding:7px 10px;font-size:12px}
-.toggles input{accent-color:#6f92ff}
-.button-row{display:flex;gap:8px;flex-wrap:wrap}
-button{cursor:pointer;background:linear-gradient(180deg,#1b2140,#121933);border:1px solid #2b3352}
-button.primary{background:linear-gradient(180deg,#3552ff,#1a2cd1);border-color:#5b72ff}
-button.secondary{background:#14203a}
-.stage{display:flex;gap:20px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
-.canvas-wrap{position:relative;border-radius:14px;overflow:hidden;background:#0a0f1f;border:1px solid #242a3b;box-shadow:0 4px 20px rgba(0,0,0,.25)}
-.canvas-wrap header{position:absolute;inset:auto auto 10px 10px;background:rgba(13,18,35,.9);border:1px solid #263055;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
-canvas{display:block;width:320px;height:320px;image-rendering:crisp-edges}
-.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.stat{background:#0e1528;border:1px solid #263055;border-radius:999px;padding:6px 10px;font-size:12px}
-.histobox{background:#0e1426;border:1px solid #263055;border-radius:10px;padding:10px}
-.histocanvas{width:320px;height:80px;display:block}
-.footer{margin:30px auto;color:var(--muted);font-size:13px;text-align:center;max-width:700px}
-.small{font-size:12px;color:#9fb0d6}
-#formulasDisplay{
-  background:#0a0c15;
-  border:1px solid #1a1f30;
-  border-radius:8px;
-  padding:12px;
-  max-height:300px;
-  overflow-y:auto;
-  scrollbar-width:thin;
-  scrollbar-color:#2a3046 #0a0c15;
-}
-#formulasDisplay::-webkit-scrollbar{width:6px}
-#formulasDisplay::-webkit-scrollbar-track{background:#0a0c15}
-#formulasDisplay::-webkit-scrollbar-thumb{background:#2a3046;border-radius:3px}
+  .toggles { display:grid; gap:calc(var(--step)); }
 </style>
 </head>
 <body>
-<header>
-  <h1>🖼️ Image Basics Lab — Core Properties</h1>
-  <div class="badge success">Real-time processing</div>
-</header>
-
-<main class="container">
-  <section class="row">
-    <div class="panel">
-      <h2>Step 1 — Load an image</h2>
-      <p class="sub">Use a sample or upload your own. Processing runs locally in your browser.</p>
-      <div class="controls">
-        <div class="control">
-          <label for="imgPick">Sample Images</label>
-          <select id="imgPick">
-            <option value="dogs">Dog Breeds (color)</option>
-            <option value="portrait">Portrait</option>
-            <option value="city">Cityscape</option>
-            <option value="gradient">Gradient</option>
-            <option value="checker">Checkerboard</option>
-          </select>
-        </div>
-        <div class="control">
-          <label for="file">Upload</label>
-          <input id="file" type="file" accept="image/*"/>
-        </div>
-      </div>
-
-      <h2 style="margin-top:12px">Step 2 — Adjust properties</h2>
-      <div class="controls" id="sliders">
-        <div class="control">
-          <label>Brightness (−100…+100)</label>
-          <div class="range"><input id="sBright" type="range" min="-100" max="100" value="0"/><span class="val" id="vBright">0</span></div>
-        </div>
-        <div class="control">
-          <label>Contrast (0…300%)</label>
-          <div class="range"><input id="sContrast" type="range" min="0" max="300" value="100"/><span class="val" id="vContrast">100%</span></div>
-        </div>
-        <div class="control">
-          <label>Exposure (factor 0.1…3.0)</label>
-          <div class="range"><input id="sExposure" type="range" min="10" max="300" value="100"/><span class="val" id="vExposure">1.00×</span></div>
-        </div>
-        <div class="control">
-          <label>Gamma (0.20…3.00)</label>
-          <div class="range"><input id="sGamma" type="range" min="20" max="300" value="100"/><span class="val" id="vGamma">1.00</span></div>
-        </div>
-        <div class="control">
-          <label>Saturation (0…300%)</label>
-          <div class="range"><input id="sSat" type="range" min="0" max="300" value="100"/><span class="val" id="vSat">100%</span></div>
-        </div>
-        <div class="control">
-          <label>Hue (−180…+180°)</label>
-          <div class="range"><input id="sHue" type="range" min="-180" max="180" value="0"/><span class="val" id="vHue">0°</span></div>
-        </div>
-        <div class="control">
-          <label>Blur Radius (0…5 px)</label>
-          <div class="range"><input id="sBlur" type="range" min="0" max="5" value="0"/><span class="val" id="vBlur">0</span></div>
-        </div>
-        <div class="control">
-          <label>Sharpness / Unsharp Amount (0…2.0)</label>
-          <div class="range"><input id="sSharp" type="range" min="0" max="200" value="0"/><span class="val" id="vSharp">0.00</span></div>
-        </div>
-        <div class="control">
-          <label>Bit Depth (1…8 bits/channel)</label>
-          <div class="range"><input id="sBits" type="range" min="1" max="8" value="8"/><span class="val" id="vBits">8-bit</span></div>
-        </div>
-        <div class="toggles">
-          <label><input id="tGray" type="checkbox"/> Grayscale</label>
-          <label><input id="tInvert" type="checkbox"/> Invert</label>
-        </div>
-        <div class="button-row">
-          <button class="secondary" id="btnReset">Reset All</button>
-          <button class="primary" id="btnRandom">Randomize</button>
-        </div>
-      </div>
-      <p class="small">Order of operations: Hue/Sat → Exposure → Brightness/Contrast → Gamma → Blur → Unsharp → Bit Depth → Grayscale/Invert.</p>
-    </div>
-
-    <div class="panel">
-      <h2>Step 3 — Preview & histogram</h2>
-      <p class="sub">Before/After at 256×256 for speed. Drag a new image on the page to load it.</p>
-      
-      <div class="panel" style="background:#0a0f1f;border:1px solid #1a2035;margin-bottom:12px">
-        <h3 style="font-size:14px;margin:0 0 8px;color:#7aa2ff">Active Formulas & Equations</h3>
-        <div id="formulasDisplay" style="font-family:monospace;font-size:12px;line-height:1.8;color:#cfe1ff"></div>
-      </div>
-      
-      <div class="stage">
-        <div class="canvas-wrap">
-          <header>Input</header>
-          <canvas id="inCanvas" width="256" height="256"></canvas>
-        </div>
-        <div class="canvas-wrap">
-          <header>Output</header>
-          <canvas id="outCanvas" width="256" height="256"></canvas>
-        </div>
-      </div>
-      <div class="stats">
-        <span class="stat">Mean: <span id="stMean">--</span></span>
-        <span class="stat">StdDev: <span id="stStd">--</span></span>
-        <span class="stat">Min..Max: <span id="stMinMax">--</span></span>
-      </div>
-      <div class="histobox" style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-weight:700;color:#bfc7dc">Output Luma Histogram</div>
-          <div class="small" id="histNote">0…255</div>
-        </div>
-        <canvas id="histCanvas" width="320" height="80" class="histocanvas"></canvas>
-      </div>
-    </div>
-  </section>
-
-  <p class="footer">
-    Tip: Try <em>extreme</em> settings (e.g., Saturation 0%, Gamma 0.3, Bit Depth 2) to see classic artifacts like posterization and wash-out.
+<main class="plate">
+  <p class="lede">
+    Every adjustment in a photo editor is arithmetic on a matrix of numbers.
+    Move a slider and watch both the picture and its <strong>histogram</strong> change &mdash;
+    the histogram is where you can see what you are actually doing to the data.
   </p>
+
+  <div>
+    <section class="panel panel--sticky">
+      <h2>Source</h2>
+      <div class="field">
+        <label for="imgPick">Sample</label>
+        <select id="imgPick">
+          <option value="portrait" selected>Portrait (astronaut)</option>
+          <option value="dogs">Texture (fur)</option>
+          <option value="city">Structure (rocket)</option>
+          <option value="gradient">Linear ramp</option>
+          <option value="checker">Checkerboard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="file">Or your own image</label>
+        <input id="file" type="file" accept="image/*"/>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Adjustments</h2>
+      <div class="field">
+        <label for="sBright">Brightness <span class="field-value" id="vBright">—</span></label>
+        <input id="sBright" type="range" min="-100" max="100" value="0"/>
+      </div>
+      <div class="field">
+        <label for="sContrast">Contrast <span class="field-value" id="vContrast">—</span></label>
+        <input id="sContrast" type="range" min="0" max="300" value="100"/>
+      </div>
+      <div class="field">
+        <label for="sExposure">Exposure <span class="field-value" id="vExposure">—</span></label>
+        <input id="sExposure" type="range" min="10" max="300" value="100"/>
+      </div>
+      <div class="field">
+        <label for="sGamma">Gamma <span class="field-value" id="vGamma">—</span></label>
+        <input id="sGamma" type="range" min="20" max="300" value="100"/>
+      </div>
+      <div class="field">
+        <label for="sSat">Saturation <span class="field-value" id="vSat">—</span></label>
+        <input id="sSat" type="range" min="0" max="300" value="100"/>
+      </div>
+      <div class="field">
+        <label for="sHue">Hue shift <span class="field-value" id="vHue">—</span></label>
+        <input id="sHue" type="range" min="-180" max="180" value="0"/>
+      </div>
+      <div class="field">
+        <label for="sBlur">Blur <span class="field-value" id="vBlur">—</span></label>
+        <input id="sBlur" type="range" min="0" max="5" value="0"/>
+      </div>
+      <div class="field">
+        <label for="sSharp">Sharpen <span class="field-value" id="vSharp">—</span></label>
+        <input id="sSharp" type="range" min="0" max="200" value="0"/>
+      </div>
+      <div class="field">
+        <label for="sBits">Bit depth <span class="field-value" id="vBits">—</span></label>
+        <input id="sBits" type="range" min="1" max="8" value="8"/>
+      </div>
+      <div class="field toggles">
+        <label class="check"><input id="tGray" type="checkbox"/> Grayscale</label>
+        <label class="check"><input id="tInvert" type="checkbox"/> Invert</label>
+      </div>
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--step)">
+        <button type="button" id="btnRandom">Randomise</button>
+        <button type="button" id="btnReset">Reset</button>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Figure</h2>
+      <div class="figs figs--2">
+        <figure>
+          <canvas id="inCanvas" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 1</b> Original.</figcaption>
+        </figure>
+        <figure>
+          <canvas id="outCanvas" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 2</b> After the adjustments.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Histogram</h2>
+      <figure>
+        <canvas id="histCanvas" width="640" height="180"></canvas>
+        <figcaption><b>Fig. 3</b> How many pixels hold each value, 0 on the left to 255 on the right.</figcaption>
+      </figure>
+      <dl class="stats" style="margin-top:calc(var(--step)*2)">
+        <div class="stat"><dt>Mean</dt><dd id="stMean">—</dd></div>
+        <div class="stat"><dt>Std dev</dt><dd id="stStd">—</dd></div>
+        <div class="stat"><dt>Min / Max</dt><dd id="stMinMax">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>What is being computed</h2>
+      <div class="readout" id="formulasDisplay"></div>
+    </section>
+  </div>
 </main>
 
+<script src="lab.js"></script>
+<script>Lab.head({ no: 'Plate 01', title: 'Image Basics' });</script>
 <script>
+
 // ---------- Utilities ----------
 const $ = s => document.querySelector(s);
 const clamp = (v,lo=0,hi=255)=>Math.max(lo,Math.min(hi,v));
@@ -190,9 +134,9 @@ const lerp = (a,b,t)=>a+(b-a)*t;
 
 // Sample images
 const IMG_URLS = {
-  dogs: "https://upload.wikimedia.org/wikipedia/commons/1/18/Dog_Breeds.jpg",
-  portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Human_faces.jpg/1280px-Human_faces.jpg",
-  city: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Lower_Manhattan_from_Jersey_City_November_2014_panorama_3.jpg/1280px-Lower_Manhattan_from_Jersey_City_November_2014_panorama_3.jpg"
+  dogs:     Lab.SAMPLES.texture.src,
+  portrait: Lab.SAMPLES.portrait.src,
+  city:     Lab.SAMPLES.structure.src,
 };
 
 // Canvas + contexts
@@ -413,11 +357,14 @@ function drawHistogram(imgData){
     bins[y]++;
   }
   const max = Math.max(...bins);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   histX.clearRect(0,0,histC.width,histC.height);
+  histX.fillStyle = css('--paper-sunk');
+  histX.fillRect(0,0,histC.width,histC.height);
+  histX.fillStyle = css('--live');
   for(let x=0;x<256;x++){
     const v=bins[x]/max;
     const bar = Math.max(1, Math.round(v*histC.height));
-    histX.fillStyle="#7aa2ff";
     // draw from bottom
     histX.fillRect(x*(histC.width/256), histC.height - bar, Math.ceil(histC.width/256), bar);
   }
@@ -653,6 +600,15 @@ function init(){
   loadSample("dogs");
 }
 init();
+
+</script>
+<script>
+  // the histogram is painted with theme colours, so repaint when the theme changes
+  const repaint = () => { try { requestProcess(); } catch (e) {} };
+  new MutationObserver(repaint).observe(document.documentElement,
+    { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', repaint);
+  Lab.foot();
 </script>
 </body>
 </html>

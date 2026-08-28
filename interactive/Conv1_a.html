@@ -1,541 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Convolution Explorer – learn image kernels interactively</title>
-  <style>
-    :root{
-      --bg:#0b0d12;
-      --panel:#121621;
-      --muted:#8b93a7;
-      --text:#e9edf5;
-      --accent:#7aa2ff;
-      --accent-2:#ff4d4d;
-      --danger:#ff6b81;
-      --success:#4caf50;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:linear-gradient(180deg,#0b0d12,#0e1320);
-      color:var(--text);
-      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      min-height:100vh;
-    }
-    a{color:var(--accent)}
-    header{
-      display:flex;
-      gap:16px;
-      align-items:center;
-      justify-content:space-between;
-      padding:18px 22px;
-      border-bottom:1px solid #1d2333;
-      background:rgba(10,14,25,.7);
-      backdrop-filter:saturate(140%) blur(6px);
-      position:sticky;
-      top:0;
-      z-index:10;
-      width:100%;
-      max-width:1400px;
-    }
-    h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.2px}
-    .container{max-width:1400px;margin:20px auto;padding:0 16px;width:100%}
-    .row{display:grid;grid-template-columns: 360px 1fr;gap:18px}
-    @media (max-width: 768px) {
-      .row{grid-template-columns: 1fr}
-    }
-    .panel{
-      background:var(--panel);
-      border:1px solid #242a3b;
-      border-radius:16px;
-      padding:16px;
-      box-shadow:0 8px 30px rgba(0,0,0,.25);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .panel:hover{
-      transform:translateY(-2px);
-      box-shadow:0 12px 40px rgba(0,0,0,.3);
-    }
-    .panel h2{font-size:16px;margin:0 0 10px 0;color:#bfc7dc}
-    .panel .sub{font-size:12px;color:var(--muted);margin:4px 0 12px}
-
-    .controls{display:grid;gap:10px}
-    label{font-size:12px;color:#b7bfd6;font-weight:500}
-    select,input[type="number"],input[type="file"],button{
-      width:100%;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid #2a3046;
-      background:#0f1424;
-      color:var(--text);
-      transition: border-color 0.2s;
-    }
-    select:hover,input:hover,button:hover{border-color:#3b4672}
-    button{
-      cursor:pointer;
-      background:linear-gradient(180deg,#1b2140,#121933);
-      border:1px solid #2b3352;
-      font-weight:500;
-    }
-    button.primary{
-      background:linear-gradient(180deg,#3552ff,#1a2cd1);
-      border-color:#5b72ff;
-    }
-    button.primary:hover{
-      background:linear-gradient(180deg,#4562ff,#2a3ce1);
-    }
-
-    .kernel-grid{
-      display:grid;
-      grid-template-columns:repeat(3,54px);
-      gap:6px;
-      margin:12px 0;
-    }
-    .kernel-grid input{
-      width:54px;
-      height:54px;
-      text-align:center;
-      font-weight:600;
-      border-radius:10px;
-      font-size:14px;
-    }
-    .kernel-grid input:focus{
-      border-color:var(--accent);
-      outline:2px solid rgba(122,162,255,0.2);
-    }
-    .kernel-info{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:8px;
-      padding:8px;
-      background:#0e1426;
-      border-radius:8px;
-      display:flex;
-      gap:16px;
-    }
-
-    .canvases{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:40px;
-      margin-top:20px;
-      flex-wrap:wrap;
-    }
-    .canvas-wrap{
-      position:relative;
-      border-radius:14px;
-      overflow:hidden;
-      background:#0a0f1f;
-      border:1px solid #242a3b;
-      flex:0 0 auto;
-      box-shadow:0 4px 20px rgba(0,0,0,.2);
-    }
-    .canvas-wrap header{
-      position:absolute;
-      inset:auto auto 12px 12px;
-      background:rgba(13,18,35,.9);
-      border:1px solid #263055;
-      border-radius:8px;
-      padding:6px 12px;
-      font-size:14px;
-      font-weight:600;
-      backdrop-filter:blur(10px);
-    }
-    canvas{
-      display:block;
-      width:400px;
-      height:400px;
-      image-rendering: pixelated;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: crisp-edges;
-      cursor: crosshair;
-    }
-    
-    /* Custom 3x3 grid cursor */
-    .canvas-wrap:hover canvas{
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><rect x="1" y="1" width="46" height="46" fill="none" stroke="rgba(255,77,77,0.8)" stroke-width="2"/><line x1="16" y1="1" x2="16" y2="47" stroke="rgba(255,77,77,0.5)" stroke-width="1"/><line x1="32" y1="1" x2="32" y2="47" stroke="rgba(255,77,77,0.5)" stroke-width="1"/><line x1="1" y1="16" x2="47" y2="16" stroke="rgba(255,77,77,0.5)" stroke-width="1"/><line x1="1" y1="32" x2="47" y2="32" stroke="rgba(255,77,77,0.5)" stroke-width="1"/><circle cx="24" cy="24" r="2" fill="rgba(255,77,77,0.8)"/></svg>') 24 24, crosshair;
-    }
-    .hover-box{
-      position:absolute;
-      pointer-events:none;
-      display:none;
-      z-index:5;
-      background:rgba(255,77,77,0.08);
-      border:1px solid rgba(255,77,77,0.4);
-      box-shadow:
-        0 0 10px rgba(255,77,77,0.2),
-        inset 0 0 10px rgba(255,77,77,0.1);
-    }
-
-    .inspect{display:grid;grid-template-columns: 1fr;gap:12px}
-    .inspect pre{
-      margin:0;
-      background:#0e1426;
-      border:1px solid #263055;
-      border-radius:10px;
-      padding:12px;
-      overflow:auto;
-      max-height:200px;
-      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      color:#cfe1ff;
-      line-height:1.4;
-    }
-    
-    .grid-comparison{
-      display:flex;
-      align-items:center;
-      gap:16px;
-      justify-content:center;
-      padding:12px 0;
-    }
-    .grid-comparison > div{
-      text-align:center;
-    }
-    .grid-comparison label{
-      display:block;
-      margin-bottom:8px;
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:0.5px;
-    }
-    .operator{
-      font-size:24px;
-      color:var(--accent);
-      font-weight:bold;
-      margin:16px 0 0 0;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      background:#0e1528;
-      padding:8px 12px;
-      border:1px solid #263055;
-      border-radius:999px;
-      font-size:12px;
-      color:#c6d2f1;
-      font-weight:500;
-    }
-    .badge.success{
-      background:#1a3d1a;
-      border-color:#2d5a2d;
-      color:#90ee90;
-    }
-    .stack{display:flex;gap:10px;flex-wrap:wrap}
-    .footer{
-      margin:40px 0 40px;
-      color:var(--muted);
-      font-size:13px;
-      text-align:center;
-      max-width:600px;
-      margin-left:auto;
-      margin-right:auto;
-    }
-    .range{display:flex;align-items:center;gap:10px}
-    .range input[type="range"]{flex:1;cursor:pointer}
-    .range span{
-      min-width:70px;
-      text-align:right;
-      font-weight:500;
-    }
-
-    .radio-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
-    .radio-row label{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      padding:8px 12px;
-      border:1px solid #2a3046;
-      border-radius:999px;
-      background:#0f1424;
-      cursor:pointer;
-      transition:all 0.2s;
-      font-size:12px;
-    }
-    .radio-row label:hover{
-      border-color:#3b4672;
-      background:#141829;
-    }
-    .radio-row input{accent-color:#6f92ff}
-    .radio-row input:checked + span{color:var(--accent)}
-
-    .mini-grid{
-      display:grid;
-      grid-template-columns:repeat(3,32px);
-      grid-auto-rows:32px;
-      gap:4px;
-      margin:12px 0;
-    }
-    .mini-grid div{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border:1px solid #2a334a;
-      background:#0c1225;
-      border-radius:6px;
-      font-size:12px;
-      color:#c5d3ff;
-      font-weight:600;
-      transition:all 0.2s;
-    }
-    .mini-grid div.active{
-      background:#1a2545;
-      border-color:var(--accent);
-    }
-    .mini-grid.kernel-display div{
-      background:#1a1f35;
-      border-color:#3a4362;
-      color:#7aa2ff;
-    }
-    .row + .row{margin-top:16px}
-
-    .sr-only{
-      position:absolute;
-      left:-10000px;
-      top:auto;
-      width:1px;
-      height:1px;
-      overflow:hidden;
-    }
-
-    .loading{
-      display:inline-block;
-      width:16px;
-      height:16px;
-      border:2px solid var(--muted);
-      border-radius:50%;
-      border-top-color:var(--accent);
-      animation:spin 1s ease-in-out infinite;
-      margin-left:8px;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    .preset-group{
-      margin-top:12px;
-      padding-top:12px;
-      border-top:1px solid #2a3046;
-    }
-    .preset-group h3{
-      font-size:13px;
-      margin:0 0 8px 0;
-      color:#8b93a7;
-      font-weight:500;
-    }
-    
-    .tips{
-      background:#1a2545;
-      border:1px solid #2b3552;
-      border-radius:12px;
-      padding:16px;
-      margin-top:16px;
-    }
-    .tips h3{
-      font-size:14px;
-      margin:0 0 8px 0;
-      color:var(--accent);
-    }
-    .tips ul{
-      margin:0;
-      padding-left:20px;
-      font-size:13px;
-      line-height:1.6;
-    }
-    
-    .pixel-info{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:8px;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Convolution — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
+<style>
+  #kernelGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+  #kernelGrid input { width:100%; text-align:center; padding:7px 2px;
+                      font:400 .78rem/1 var(--mono); font-variant-numeric:tabular-nums;
+                      border:1px solid var(--rule-soft); background:var(--paper); color:var(--ink);
+                      border-radius:0; }
+  #kernelGrid input:focus-visible { outline:2px solid var(--measure); outline-offset:-2px; }
+  #miniKernel, #miniNeighborhood { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; }
+  #miniKernel div, #miniNeighborhood div {
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font:400 .68rem/1 var(--mono); background:var(--paper); border:1px solid var(--rule-soft);
+    color:var(--ink-2); }
+  .kernel-display { background:var(--live-soft) !important; border-color:var(--live) !important; }
+  .active { background:var(--measure-soft) !important; border-color:var(--measure) !important; }
+  .probe { cursor:crosshair; }
+  #loadingIndicator { font:400 .72rem/1 var(--mono); color:var(--ink-3); }
+</style>
 </head>
 <body>
-  <header>
-    <h1>🎨 Hahn's Math of Data Science - Convolution Explorer</h1>
-    <div class="stack">
-      <span class="badge">🖼️ Drag an image onto the page</span>
-      <span class="badge">🔍 Hover to inspect convolution</span>
-      <span class="badge success">✨ Real-time processing</span>
-    </div>
-  </header>
+<main class="plate">
+  <p class="lede">
+    A convolution slides a small matrix over an image and replaces each pixel with a weighted
+    sum of its neighbours. Nine numbers decide whether you get a blur, an edge detector, or
+    nothing at all. Move over Fig. 1 to see the arithmetic for a single pixel.
+  </p>
 
-  <main class="container">
-    <section class="row">
-      <div class="panel">
-        <h2>Step 1 — Pick or load an image</h2>
-        <p class="sub">Use sample images or upload your own. Images are processed locally in your browser.</p>
-        <div class="controls">
-          <div>
-            <label for="imgPick">Sample Images</label>
-            <select id="imgPick">
-              <option value="dogs">Dog Breeds (color)</option>
-              <option value="portrait">Portrait (grayscale)</option>
-              <option value="grid">Checker grid</option>
-              <option value="gradient">Gradient test</option>
-            </select>
-          </div>
-          <div>
-            <label for="file">Upload image</label>
-            <input id="file" type="file" accept="image/*" />
-          </div>
-          <div>
-            <label>Grayscale Conversion</label>
-            <div class="radio-row" aria-label="grayscale mode">
-              <label><input type="radio" name="gray" value="lum" checked /><span>Luminance</span></label>
-              <label><input type="radio" name="gray" value="avg" /><span>Average</span></label>
-              <label><input type="radio" name="gray" value="none" /><span>Keep Color</span></label>
-            </div>
-          </div>
-          <div class="tips">
-            <h3>💡 Quick Tips</h3>
-            <ul>
-              <li>Try different kernels to see edge detection, blurring, and sharpening</li>
-              <li>Hover over pixels to understand the math</li>
-              <li>Adjust the mix slider to blend effects</li>
-            </ul>
-          </div>
+  <div>
+    <section class="panel panel--sticky">
+      <h2>Kernel</h2>
+
+      <div class="field">
+        <label for="preset">Preset</label>
+        <select id="preset">
+          <option value="identity">Identity</option>
+          <option value="boxblur">Box blur</option>
+          <option value="gauss">Gaussian blur</option>
+          <option value="motionblur">Motion blur</option>
+          <option value="sharpen">Sharpen</option>
+          <option value="unsharp">Unsharp mask</option>
+          <option value="edge">Edge detect</option>
+          <option value="laplace">Laplacian</option>
+          <option value="sobelx">Sobel X</option>
+          <option value="sobely">Sobel Y</option>
+          <option value="emboss">Emboss</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Weights <span class="field-value" id="kernelSum">Σ 1</span></span>
+        <div id="kernelGrid"></div>
+        <p class="label" id="kernelNorm" style="margin:var(--step) 0 0;font:400 .72rem/1.4 var(--mono);color:var(--ink-3)"></p>
+      </div>
+
+      <div class="field">
+        <button type="button" id="randomKernel">Random kernel</button>
+      </div>
+
+      <div class="field">
+        <label class="check"><input type="checkbox" id="normalize" checked/> Normalise (divide by Σ)</label>
+        <label class="check" style="margin-top:var(--step)"><input type="checkbox" id="clamp" checked/> Clamp to 0–255</label>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Edge handling</span>
+        <div class="segmented" role="radiogroup" aria-label="Edge handling" style="flex-wrap:wrap">
+          <label><input type="radio" name="edge" value="zero"><span>Zero</span></label>
+          <label><input type="radio" name="edge" value="extend" checked><span>Extend</span></label>
+          <label><input type="radio" name="edge" value="mirror"><span>Mirror</span></label>
+          <label><input type="radio" name="edge" value="wrap"><span>Wrap</span></label>
         </div>
       </div>
 
-      <div class="panel">
-        <h2>Step 2 — Choose a kernel</h2>
-        <p class="sub">Select a preset or create custom values. The kernel is applied to each pixel's neighborhood.</p>
-        <div class="controls">
-          <div>
-            <label for="preset">Kernel Presets</label>
-            <select id="preset">
-              <optgroup label="Basic">
-                <option value="identity">Identity (no change)</option>
-              </optgroup>
-              <optgroup label="Blur Filters">
-                <option value="boxblur">Box Blur</option>
-                <option value="gauss">Gaussian Blur</option>
-                <option value="motionblur">Motion Blur</option>
-              </optgroup>
-              <optgroup label="Edge Detection">
-                <option value="edge">Edge Detection</option>
-                <option value="laplace">Laplacian</option>
-                <option value="sobelx">Sobel X (vertical edges)</option>
-                <option value="sobely">Sobel Y (horizontal edges)</option>
-              </optgroup>
-              <optgroup label="Enhancement">
-                <option value="sharpen">Sharpen</option>
-                <option value="unsharp">Unsharp Mask</option>
-                <option value="emboss">Emboss</option>
-              </optgroup>
-              <option value="custom">— Custom —</option>
-            </select>
-          </div>
-          <div>
-            <label>Kernel Matrix (3×3)</label>
-            <div class="kernel-grid" id="kernelGrid" aria-label="kernel editor"></div>
-            <div class="kernel-info">
-              <span>Sum: <strong id="kernelSum">1</strong></span>
-              <span>Norm: <strong id="kernelNorm">×1.00</strong></span>
-            </div>
-          </div>
-          <div>
-            <label>Processing Options</label>
-            <div class="radio-row">
-              <label><input type="checkbox" id="normalize" checked /><span>Normalize</span></label>
-              <label><input type="checkbox" id="clamp" checked /><span>Clamp [0-255]</span></label>
-            </div>
-          </div>
-          <div>
-            <label>Edge Handling</label>
-            <div class="radio-row">
-              <label><input type="radio" name="edge" value="zero" checked /><span>Zero pad</span></label>
-              <label><input type="radio" name="edge" value="extend" /><span>Extend</span></label>
-              <label><input type="radio" name="edge" value="wrap" /><span>Wrap</span></label>
-              <label><input type="radio" name="edge" value="mirror" /><span>Mirror</span></label>
-            </div>
-          </div>
-          <div class="range">
-            <label for="mix">Effect Strength</label>
-            <input id="mix" type="range" min="0" max="1" step="0.01" value="1" />
-            <span id="mixLabel">100%</span>
-          </div>
-          <button class="primary" id="randomKernel">🎲 Random Kernel</button>
+      <div class="field">
+        <span class="field-label">Grayscale</span>
+        <div class="segmented" role="radiogroup" aria-label="Grayscale">
+          <label><input type="radio" name="gray" value="lum" checked><span>Luma</span></label>
+          <label><input type="radio" name="gray" value="avg"><span>Mean</span></label>
+          <label><input type="radio" name="gray" value="none"><span>Colour</span></label>
         </div>
+      </div>
+
+      <div class="field">
+        <label for="imgPick">Sample</label>
+        <select id="imgPick">
+          <option value="dogs" selected>Texture (fur)</option>
+          <option value="portrait">Portrait (astronaut)</option>
+          <option value="gradient">Linear ramp</option>
+          <option value="checker">Checkerboard</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="file">Or your own image</label>
+        <input id="file" type="file" accept="image/*"/>
+        <div id="loadingIndicator" style="margin-top:var(--step)"></div>
+      </div>
+
+      <div class="field">
+        <label for="mix">Blend to original <span class="field-value" id="mixLabel">100%</span></label>
+        <input id="mix" type="range" min="0" max="1" step="0.01" value="1"/>
+      </div>
+
+      <dl class="stats">
+        <div class="stat"><dt>Σ weights</dt><dd id="sumBadge">1</dd></div>
+        <div class="stat"><dt>Output</dt><dd id="rangeBadge">—</dd></div>
+        <div class="stat"><dt>Mode</dt><dd id="modeBadge">luma</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Figure</h2>
+      <div class="figs figs--2">
+        <figure>
+          <canvas id="inCanvas" width="320" height="320" class="probe"></canvas>
+          <figcaption><b>Fig. 1</b> Input. <span id="hoverIn">—</span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="outCanvas" width="320" height="320"></canvas>
+          <figcaption><b>Fig. 2</b> Convolved. <span id="hoverOut">—</span></figcaption>
+        </figure>
       </div>
     </section>
 
-    <section class="row">
-      <div class="panel" style="grid-column: 1 / -1;">
-        <h2>Step 3 — See the convolution <span id="loadingIndicator" class="loading" style="display:none"></span></h2>
-        <p class="sub">Hover over any pixel to inspect the 3×3 neighborhood and see the convolution calculation in real-time.</p>
-        <div class="canvases">
-          <div class="canvas-wrap">
-            <header>Input</header>
-            <canvas id="inCanvas" width="256" height="256" aria-label="input image"></canvas>
-            <div class="hover-box" id="hoverIn"></div>
-          </div>
-          <div class="canvas-wrap">
-            <header>Output</header>
-            <canvas id="outCanvas" width="256" height="256" aria-label="output image"></canvas>
-            <div class="hover-box" id="hoverOut"></div>
-          </div>
-        </div>
+    <section class="panel">
+      <h2>One pixel, in full</h2>
+      <div class="figs figs--2">
+        <figure>
+          <div id="miniNeighborhood"></div>
+          <figcaption><b>Fig. 3</b> The 3&times;3 neighbourhood under the pointer.</figcaption>
+        </figure>
+        <figure>
+          <div id="miniKernel"></div>
+          <figcaption><b>Fig. 4</b> The kernel, aligned to it.</figcaption>
+        </figure>
       </div>
-      <div class="panel">
-        <h2>Computation Details</h2>
-        <div class="inspect">
-          <div class="grid-comparison">
-            <div>
-              <label>Kernel Matrix</label>
-              <div class="mini-grid" id="miniKernel"></div>
-            </div>
-            <div class="operator">×</div>
-            <div>
-              <label>Pixel Neighborhood</label>
-              <div class="mini-grid" id="miniNeighborhood"></div>
-            </div>
-          </div>
-          <div class="pixel-info" id="pixelInfo">Position: (--, --)</div>
-          <div>
-            <label>Convolution Math</label>
-            <pre id="mathBox">Hover over the image to see the convolution calculation:
-Σ(kernel[i,j] × pixel[x+i, y+j]) → output pixel</pre>
-          </div>
-          <div class="stack">
-            <span class="badge">Kernel sum: <span id="sumBadge">1</span></span>
-            <span class="badge">Output range: <span id="rangeBadge">0…255</span></span>
-            <span class="badge">Processing: <span id="modeBadge">Grayscale</span></span>
-          </div>
-        </div>
-      </div>
+      <div class="readout" id="mathBox" style="margin-top:calc(var(--step)*2)" role="status" aria-live="polite"></div>
+      <p class="label" id="pixelInfo" style="margin-top:var(--step);font:400 .74rem/1.5 var(--mono);color:var(--ink-3)"></p>
     </section>
+  </div>
+</main>
 
-    <p class="footer">
-      <strong>Explore convolution interactively!</strong> Try edge detection filters (Sobel, Laplacian) on the dog image to see how kernels detect features. 
-      Turn off normalization with edge detectors to understand raw convolution values. All processing runs client-side in your browser using Canvas API.
-    </p>
-  </main>
+<script src="lab.js"></script>
+<script>Lab.head({ no: 'Plate 07', title: 'Convolution' });</script>
+<script>
 
-  <script>
   // ---------- Utilities ----------
   const $$ = sel => document.querySelector(sel);
   const $$$ = sel => Array.from(document.querySelectorAll(sel));
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // Default dog breeds image URL
-  const DEFAULT_IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/1/18/Dog_Breeds.jpg";
+  const DEFAULT_IMAGE_URL = Lab.SAMPLES.texture.src;
 
   // Sample images
   const samplePortrait = new Image();
   samplePortrait.crossOrigin = "anonymous";
-  samplePortrait.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Human_faces.jpg/1280px-Human_faces.jpg";
+  samplePortrait.src = Lab.SAMPLES.portrait.src;
 
   const dogBreedsImage = new Image();
   dogBreedsImage.crossOrigin = "anonymous";
@@ -1118,6 +750,8 @@
   }
 
   init();
-  </script>
+  
+</script>
+<script>Lab.foot();</script>
 </body>
 </html>

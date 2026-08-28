@@ -1,51 +1,122 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>DataSci26 — Interactive Labs</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Interactive Labs — DataSci26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 <style>
-  :root { --bg:#fdfdfb; --fg:#1a1a1a; --mut:#666; --line:#e2e2dd; --accent:#8b2f2f; }
-  @media (prefers-color-scheme:dark){
-    :root { --bg:#16171a; --fg:#e8e6e1; --mut:#9a9791; --line:#2e3035; --accent:#e0956b; }
+  .contents { max-width: 1280px; margin: 0 auto; padding: calc(var(--step) * 3); }
+  .masthead { max-width: 62ch; margin: calc(var(--step) * 4) 0 calc(var(--step) * 6); }
+  .masthead h1 {
+    margin: 0 0 calc(var(--step) * 2);
+    font: 600 clamp(2.1rem, 6vw, 3.4rem)/1.02 var(--serif);
+    font-variation-settings: "SOFT" 0, "WONK" 1, "opsz" 144;
+    letter-spacing: -0.028em;
   }
-  *{box-sizing:border-box}
-  body{margin:0;padding:3rem 1.5rem;background:var(--bg);color:var(--fg);
-       font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-  main{max-width:800px;margin:0 auto}
-  h1{font-size:1.9rem;margin:0 0 .25rem;letter-spacing:-.02em}
-  .sub{color:var(--mut);margin:0 0 2.5rem}
-  ul{list-style:none;padding:0;margin:0}
-  li{border-top:1px solid var(--line);padding:1.1rem 0}
-  li:last-child{border-bottom:1px solid var(--line)}
-  a{color:var(--fg);text-decoration:none;font-weight:600}
-  a:hover{color:var(--accent)}
-  .wk{display:inline-block;min-width:4.5rem;color:var(--accent);font-size:.78rem;
-      font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-  .desc{color:var(--mut);font-size:.92rem;margin:.2rem 0 0 4.5rem}
-  @media (max-width:520px){ .desc{margin-left:0} }
-  footer{margin-top:2.5rem;color:var(--mut);font-size:.85rem}
+  .masthead h1 em { font-style: normal; color: var(--live); }
+  .masthead p { margin: 0; color: var(--ink-2); font-size: 1.08rem; }
+  .rule { display: flex; align-items: baseline; gap: calc(var(--step) * 2);
+          margin: calc(var(--step) * 5) 0 calc(var(--step) * 2); }
+  .rule span { font: 500 0.7rem/1 var(--mono); letter-spacing: .16em;
+               text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+  .rule::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .plates { list-style: none; margin: 0; padding: 0;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1px; background: var(--rule-soft); border: 1px solid var(--rule-soft); }
+  .plates li { background: var(--paper-2); }
+  .plates a { display: block; padding: calc(var(--step) * 2.5); text-decoration: none; height: 100%; }
+  .plates a:hover { background: var(--paper); }
+  .plates a:hover h2 { color: var(--live); }
+  .plates .no { font: 500 0.66rem/1 var(--mono); letter-spacing: .16em;
+                text-transform: uppercase; color: var(--live); }
+  .plates h2 { margin: calc(var(--step) * 1.5) 0 calc(var(--step)); font: 600 1.12rem/1.2 var(--serif);
+               color: var(--ink); letter-spacing: -.01em; }
+  .plates p { margin: 0; color: var(--ink-3); font-size: .9rem; line-height: 1.5; }
+  .top { display: flex; justify-content: space-between; align-items: center;
+         padding: calc(var(--step) * 2) 0; border-bottom: 1px solid var(--rule); }
+  .top .where { font: 400 .74rem/1 var(--mono); color: var(--ink-3); }
 </style>
-<main>
-<h1>Interactive Labs</h1>
-<p class="sub">Mathematics of Data Science &middot; run in the browser, nothing to install</p>
-<ul>
-  <li><span class="wk">Week 7</span><a href="image1.html">Image Basics</a>
-      <div class="desc">Shape, dtype, channels — the core properties of an image, live.</div></li>
-  <li><span class="wk">Week 7</span><a href="colors.html">Colormaps</a>
-      <div class="desc">How a grayscale matrix becomes a colored picture.</div></li>
-  <li><span class="wk">Week 7</span><a href="bit_depth.html">Bit Depth</a>
-      <div class="desc">Quantization and dithering — what you lose per bit.</div></li>
-  <li><span class="wk">Week 7</span><a href="gamma.html">Gamma &amp; Tone Mapping</a>
-      <div class="desc">Why pixel values are not linear in brightness.</div></li>
-  <li><span class="wk">Week 8</span><a href="pixelcombo.html">Image Combinatorics</a>
-      <div class="desc">Counting every possible image. The numbers stop making sense.</div></li>
-  <li><span class="wk">Week 9</span><a href="matrix_multiplication_lab.html">Matrix Multiplication</a>
-      <div class="desc">Step through a product one entry at a time.</div></li>
-  <li><span class="wk">Week 12</span><a href="Conv1_a.html">Convolution Explorer</a>
-      <div class="desc">Draw a kernel, watch it sweep the image.</div></li>
-  <li><span class="wk">Week 12</span><a href="pool.html">Pooling Explorer</a>
-      <div class="desc">Max vs. average pooling, stride and window, side by side.</div></li>
-  <li><span class="wk">Week 13</span><a href="alexnet.html">AlexNet Architecture</a>
-      <div class="desc">Every layer and every tensor shape, end to end.</div></li>
-</ul>
-<footer>Source: <a href="https://github.com/williamedwardhahn/DataSci26">williamedwardhahn/DataSci26</a></footer>
-</main>
+</head>
+<body>
+
+<div class="contents">
+
+  <div class="top">
+    <span class="where">Mathematics of Data Science · Fall 2026</span>
+    <div class="theme-switch" role="group" aria-label="Colour theme">
+      <button type="button" data-theme="light">Light</button>
+      <button type="button" data-theme="system">Auto</button>
+      <button type="button" data-theme="dark">Dark</button>
+    </div>
+  </div>
+
+  <header class="masthead">
+    <h1>Nine things you can<br>only learn by <em>moving</em> them.</h1>
+    <p>
+      Each plate is a single page that runs entirely in your browser — no install,
+      no account, nothing uploaded. Open one alongside the lab notebook for that week
+      and change every number until the picture stops surprising you.
+    </p>
+  </header>
+
+  <div class="rule"><span>Weeks 7 — 8 · Images</span></div>
+  <ul class="plates">
+    <li><a href="image1.html">
+      <span class="no">Plate 01</span>
+      <h2>Image Basics</h2>
+      <p>Brightness, contrast, gamma, blur and bit depth — with the histogram moving underneath.</p></a></li>
+    <li><a href="bit_depth.html">
+      <span class="no">Plate 02</span>
+      <h2>Bit Depth &amp; Dithering</h2>
+      <p>Quantise to one bit and watch dithering buy back the detail. PSNR included.</p></a></li>
+    <li><a href="colors.html">
+      <span class="no">Plate 03</span>
+      <h2>Colormaps</h2>
+      <p>Why viridis and not jet, argued with a lightness curve rather than an opinion.</p></a></li>
+    <li><a href="gamma.html">
+      <span class="no">Plate 04</span>
+      <h2>Gamma &amp; Tone Mapping</h2>
+      <p>The transfer curve between what a sensor recorded and what a screen shows.</p></a></li>
+    <li><a href="pixelcombo.html">
+      <span class="no">Plate 05</span>
+      <h2>Image Combinatorics</h2>
+      <p>Count every possible image. Compare it to the atoms in the universe. Keep going.</p></a></li>
+  </ul>
+
+  <div class="rule"><span>Weeks 9 — 13 · Models</span></div>
+  <ul class="plates">
+    <li><a href="matrix_multiplication_lab.html">
+      <span class="no">Plate 06</span>
+      <h2>Matrix Multiplication</h2>
+      <p>Every entry of a product is one dot product. Step through them one at a time.</p></a></li>
+    <li><a href="Conv1_a.html">
+      <span class="no">Plate 07</span>
+      <h2>Convolution</h2>
+      <p>Nine weights decide blur, edge or nothing. See the arithmetic for a single pixel.</p></a></li>
+    <li><a href="pool.html">
+      <span class="no">Plate 08</span>
+      <h2>Pooling</h2>
+      <p>Max, mean and min over a sliding window, and exactly which pixels fed which output.</p></a></li>
+    <li><a href="alexnet.html">
+      <span class="no">Plate 09</span>
+      <h2>AlexNet</h2>
+      <p>Every layer, every shape, every parameter — recomputed as you change the input size.</p></a></li>
+  </ul>
+
+</div>
+
+<script src="lab.js"></script>
+<script>
+  const mode = Lab.initTheme();
+  document.querySelectorAll('.theme-switch button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.theme === mode));
+    b.addEventListener('click', () => Lab.setTheme(b.dataset.theme));
+  });
+  Lab.foot();
+</script>
+</body>
+</html>
