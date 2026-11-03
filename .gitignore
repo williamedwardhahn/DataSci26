@@ -10,3 +10,6 @@ users_list.html
 file.csv
 file.pdf
 page_b64.html
+
+# Third-party books and private drafts: kept locally, never published
+_source/pdfs/
