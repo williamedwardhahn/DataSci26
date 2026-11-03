@@ -10,7 +10,7 @@ Everything pulled from the previous course repos, staged under `_source/` for re
 | Same notebooks, outputs intact | 88 | `_source/notebooks_full/` — **gitignored**, local only |
 | HTML labs & web demos | 26 | `_source/labs-html/` |
 | Markdown notes & problem sets | 16 | `_source/docs/` |
-| PDFs (books, notes, cheatsheets) | 10 | `_source/pdfs/` |
+| PDFs (books, notes, cheatsheets) | 10 | kept locally, not published (third-party books) |
 | Datasets | 22 | `_source/datasets/` |
 | Original READMEs (per-semester link index) | 14 | `_source/syllabi/` |
 | `mpcr` helper package | 1 | `_source/package/mpcr/` |
