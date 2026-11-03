@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#071923" />
+  <title>Boca Tide Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ3yWdrqHQ0GqQfMZV/1kMZL0V+vo="
+    crossorigin=""
+  />
+
+  <style>
+    :root {
+      --bg: #071923;
+      --panel: rgba(10, 33, 45, 0.92);
+      --panel-2: #0d2a39;
+      --text: #eef9ff;
+      --muted: #9fc0cf;
+      --accent: #54d5ff;
+      --accent-2: #22b7e8;
+      --danger: #ff7878;
+      --line: rgba(255,255,255,.12);
+      --shadow: 0 14px 35px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    #app {
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(84,213,255,.12), transparent 28%),
+        var(--bg);
+    }
+
+    header {
+      position: relative;
+      z-index: 1000;
+      padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: rgba(7,25,35,.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .title {
+      min-width: 0;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .locate {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--panel-2);
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .locate:active { transform: scale(.97); }
+
+    #map {
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      background: #0d2530;
+    }
+
+    .leaflet-control-attribution {
+      font-size: 9px;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: #0d2a39;
+      color: var(--text);
+    }
+
+    .leaflet-popup-content {
+      margin: 10px 12px;
+      line-height: 1.35;
+    }
+
+    .sheet {
+      position: relative;
+      z-index: 1001;
+      padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+      background: rgba(7,25,35,.97);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--line);
+      box-shadow: 0 -16px 40px rgba(0,0,0,.28);
+      max-height: 46dvh;
+      overflow: auto;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    select {
+      min-width: 0;
+      width: 100%;
+      height: 42px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .refresh {
+      height: 42px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+      min-height: 16px;
+    }
+
+    .status.error { color: var(--danger); }
+
+    .tides {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(125px, 1fr);
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scroll-snap-type: x proximity;
+    }
+
+    .tide-card {
+      scroll-snap-align: start;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(84,213,255,.08), transparent 70%),
+        var(--panel-2);
+      padding: 12px;
+      min-height: 104px;
+    }
+
+    .tide-type {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .tide-time {
+      font-size: 19px;
+      font-weight: 750;
+      margin-top: 6px;
+    }
+
+    .tide-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 12px 2px;
+    }
+
+    .station-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 3px rgba(84,213,255,.3);
+    }
+
+    .user-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 5px solid var(--accent-2);
+      box-shadow: 0 0 0 5px rgba(34,183,232,.25);
+    }
+
+    @media (min-width: 760px) {
+      #app {
+        grid-template-columns: minmax(0, 1fr) 380px;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      header {
+        grid-column: 1 / 3;
+      }
+
+      #map {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .sheet {
+        grid-column: 2;
+        grid-row: 2;
+        max-height: none;
+        border-top: none;
+        border-left: 1px solid var(--line);
+      }
+
+      .tides {
+        grid-auto-flow: row;
+        grid-auto-columns: auto;
+        overflow-x: visible;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="title">
+        <h1>Boca Tide Map</h1>
+        <p id="subtitle">Boca Raton, Florida · NOAA tide predictions</p>
+      </div>
+      <button id="locateBtn" class="locate" type="button" aria-label="Use my location" title="Use my location">◎</button>
+    </header>
+
+    <div id="map" aria-label="Tide station map"></div>
+
+    <section class="sheet">
+      <div class="toolbar">
+        <select id="stationSelect" aria-label="NOAA tide station"></select>
+        <button id="refreshBtn" class="refresh" type="button">Refresh</button>
+      </div>
+      <div id="status" class="status">Finding nearby NOAA tide stations…</div>
+      <div id="tides" class="tides">
+        <div class="empty">Loading tide predictions…</div>
+      </div>
+    </section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+
+  <script>
+    "use strict";
+
+    const BOCA = { lat: 26.3683, lon: -80.1289 };
+    const MAX_STATIONS = 8;
+    const STATION_RADIUS_MILES = 90;
+
+    const stationSelect = document.getElementById("stationSelect");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const locateBtn = document.getElementById("locateBtn");
+    const statusEl = document.getElementById("status");
+    const tidesEl = document.getElementById("tides");
+    const subtitleEl = document.getElementById("subtitle");
+
+    const map = L.map("map", {
+      zoomControl: true,
+      attributionControl: true
+    }).setView([BOCA.lat, BOCA.lon], 10);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const stationIcon = L.divIcon({
+      className: "",
+      html: '<div class="station-dot"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+
+    const userIcon = L.divIcon({
+      className: "",
+      html: '<div class="user-dot"></div>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+
+    let stations = [];
+    let stationMarkers = [];
+    let userMarker = null;
+    let currentCenter = { ...BOCA };
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    function toRad(value) {
+      return value * Math.PI / 180;
+    }
+
+    function distanceMiles(aLat, aLon, bLat, bLon) {
+      const R = 3958.7613;
+      const dLat = toRad(bLat - aLat);
+      const dLon = toRad(bLon - aLon);
+      const lat1 = toRad(aLat);
+      const lat2 = toRad(bLat);
+
+      const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+
+    function formatTime(dateString) {
+      const d = new Date(dateString.replace(" ", "T"));
+      if (Number.isNaN(d.getTime())) return dateString;
+      return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+
+    function formatDay(dateString) {
+      const d = new Date(dateString.replace(" ", "T"));
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+    }
+
+    function clearStationMarkers() {
+      stationMarkers.forEach(marker => map.removeLayer(marker));
+      stationMarkers = [];
+    }
+
+    function renderStationMarkers() {
+      clearStationMarkers();
+
+      stations.forEach(station => {
+        const marker = L.marker([station.lat, station.lng], { icon: stationIcon })
+          .addTo(map)
+          .bindPopup(
+            `<strong>${escapeHtml(station.name)}</strong><br>` +
+            `${station.distance.toFixed(1)} mi away<br>` +
+            `NOAA ${escapeHtml(station.id)}`
+          );
+
+        marker.on("click", () => {
+          stationSelect.value = station.id;
+          loadTides(station.id);
+        });
+
+        stationMarkers.push(marker);
+      });
+    }
+
+    function renderStationSelect() {
+      stationSelect.innerHTML = "";
+
+      stations.forEach(station => {
+        const option = document.createElement("option");
+        option.value = station.id;
+        option.textContent = `${station.name} · ${station.distance.toFixed(0)} mi`;
+        stationSelect.appendChild(option);
+      });
+    }
+
+    async function fetchStations(center) {
+      setStatus("Finding nearby NOAA tide stations…");
+
+      const url = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions";
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Station request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      const rawStations = Array.isArray(data.stations) ? data.stations : [];
+
+      const ranked = rawStations
+        .map(s => {
+          const lat = Number(s.lat);
+          const lng = Number(s.lng);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+          return {
+            id: String(s.id),
+            name: s.name || `NOAA ${s.id}`,
+            lat,
+            lng,
+            distance: distanceMiles(center.lat, center.lon, lat, lng)
+          };
+        })
+        .filter(Boolean)
+        .filter(s => s.distance <= STATION_RADIUS_MILES)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, MAX_STATIONS);
+
+      if (!ranked.length) {
+        throw new Error("No nearby NOAA tide-prediction stations were found.");
+      }
+
+      stations = ranked;
+      renderStationSelect();
+      renderStationMarkers();
+
+      const nearest = stations[0];
+      stationSelect.value = nearest.id;
+
+      const bounds = L.latLngBounds(
+        [[center.lat, center.lon], ...stations.map(s => [s.lat, s.lng])]
+      );
+      map.fitBounds(bounds.pad(0.18), { maxZoom: 11 });
+
+      await loadTides(nearest.id);
+    }
+
+    async function loadTides(stationId) {
+      const station = stations.find(s => s.id === stationId);
+      if (!station) return;
+
+      setStatus(`Loading tides for ${station.name}…`);
+      tidesEl.innerHTML = '<div class="empty">Loading tide predictions…</div>';
+      subtitleEl.textContent = `${station.name} · NOAA ${station.id}`;
+
+      const params = new URLSearchParams({
+        product: "predictions",
+        application: "boca_tide_map",
+        begin_date: formatNoaaDate(new Date()),
+        range: "72",
+        datum: "MLLW",
+        station: station.id,
+        time_zone: "lst_ldt",
+        units: "english",
+        interval: "hilo",
+        format: "json"
+      });
+
+      const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params.toString()}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Tide request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || "NOAA returned a tide-data error.");
+      }
+
+      const predictions = Array.isArray(data.predictions) ? data.predictions : [];
+
+      if (!predictions.length) {
+        tidesEl.innerHTML = '<div class="empty">No high/low predictions available for this station.</div>';
+        setStatus("No predictions returned.");
+        return;
+      }
+
+      tidesEl.innerHTML = predictions.slice(0, 10).map(p => {
+        const high = String(p.type).toUpperCase() === "H";
+        const label = high ? "High tide" : "Low tide";
+        const height = Number(p.v);
+
+        return `
+          <article class="tide-card">
+            <div class="tide-type">${label}</div>
+            <div class="tide-time">${formatTime(p.t)}</div>
+            <div class="tide-meta">${formatDay(p.t)}</div>
+            <div class="tide-meta">${Number.isFinite(height) ? height.toFixed(2) + " ft MLLW" : ""}</div>
+          </article>
+        `;
+      }).join("");
+
+      setStatus(`Showing the next ${Math.min(predictions.length, 10)} high/low tides.`);
+    }
+
+    function formatNoaaDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}${m}${d}`;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function useMyLocation() {
+      if (!navigator.geolocation) {
+        setStatus("Geolocation is not supported by this browser.", true);
+        return;
+      }
+
+      setStatus("Getting your location…");
+
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          currentCenter = { lat, lon };
+
+          if (userMarker) {
+            userMarker.setLatLng([lat, lon]);
+          } else {
+            userMarker = L.marker([lat, lon], { icon: userIcon })
+              .addTo(map)
+              .bindPopup("Your location");
+          }
+
+          map.setView([lat, lon], 11);
+
+          try {
+            await fetchStations(currentCenter);
+          } catch (error) {
+            setStatus(error.message, true);
+          }
+        },
+        error => {
+          const messages = {
+            1: "Location permission was denied.",
+            2: "Your location is unavailable.",
+            3: "Location request timed out."
+          };
+          setStatus(messages[error.code] || "Could not get your location.", true);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    }
+
+    stationSelect.addEventListener("change", () => {
+      loadTides(stationSelect.value).catch(error => setStatus(error.message, true));
+
+      const station = stations.find(s => s.id === stationSelect.value);
+      if (station) {
+        map.flyTo([station.lat, station.lng], 12, { duration: 0.7 });
+      }
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      if (!stationSelect.value) return;
+      loadTides(stationSelect.value).catch(error => setStatus(error.message, true));
+    });
+
+    locateBtn.addEventListener("click", useMyLocation);
+
+    fetchStations(currentCenter).catch(error => {
+      setStatus(error.message, true);
+      tidesEl.innerHTML = `
+        <div class="empty">
+          Could not load NOAA data. Check your internet connection and reload the page.
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

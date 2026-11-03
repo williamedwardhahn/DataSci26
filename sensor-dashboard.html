@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#07090f" />
+  <title>Live Sensor Dashboard</title>
+  <style>
+    :root {
+      --bg: #07090f;
+      --bg2: #0d111a;
+      --card: #121826;
+      --card2: #171f2e;
+      --line: #243044;
+      --text: #e8eef8;
+      --muted: #8b98ad;
+      --accent: #5eead4;
+      --accent2: #38bdf8;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --ok: #34d399;
+      --pink: #f472b6;
+      --violet: #a78bfa;
+      --shadow: 0 10px 40px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #123047 0%, transparent 50%),
+        radial-gradient(900px 500px at 110% 0%, #2a1848 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      padding: 18px 16px 40px;
+    }
+    header {
+      max-width: 1400px;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    h1 {
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      letter-spacing: -0.03em;
+      font-weight: 720;
+    }
+    h1 span { color: var(--accent); }
+    .sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      appearance: none;
+      border: 1px solid #2a3b55;
+      background: linear-gradient(180deg, #1b2738, #121a27);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.86rem;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s;
+    }
+    button:hover { border-color: var(--accent2); transform: translateY(-1px); }
+    button.primary {
+      background: linear-gradient(180deg, #2dd4bf, #0d9488);
+      color: #04201c;
+      border-color: #5eead4;
+      font-weight: 700;
+    }
+    button.danger {
+      background: linear-gradient(180deg, #7f1d1d, #450a0a);
+      border-color: #ef4444;
+    }
+    .grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(23,31,46,.92), rgba(14,18,28,.92));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .card.wide { grid-column: span 6; }
+    .card.full { grid-column: span 12; }
+    .card.third { grid-column: span 4; }
+    .card.quarter { grid-column: span 3; }
+    @media (max-width: 980px) {
+      .card.wide, .card.third, .card.quarter { grid-column: span 12; }
+    }
+    .card h2 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #334155; display: inline-block;
+      box-shadow: 0 0 0 0 rgba(52,211,153,0);
+    }
+    .dot.on { background: var(--ok); box-shadow: 0 0 10px var(--ok); animation: pulse 1.6s infinite; }
+    .dot.off { background: var(--bad); }
+    .dot.warn { background: var(--warn); }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(52,211,153,.55); }
+      70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); }
+      100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+    }
+    .values {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .metric {
+      background: var(--bg2);
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .metric .k { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .metric .v { font-variant-numeric: tabular-nums; font-size: 1.05rem; margin-top: 2px; font-weight: 650; }
+    .metric .v.teal { color: var(--accent); }
+    .metric .v.sky { color: var(--accent2); }
+    .metric .v.pink { color: var(--pink); }
+    .metric .v.gold { color: var(--warn); }
+    .metric .v.violet { color: var(--violet); }
+    canvas.chart {
+      width: 100%;
+      height: 140px;
+      display: block;
+      background: #0a0f18;
+      border-radius: 10px;
+      border: 1px solid #1b2535;
+    }
+    .video-wrap {
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+      border: 1px solid #1b2535;
+    }
+    video, #camCanvas {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    #camCanvas { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: .55; }
+    .note { color: var(--muted); font-size: .78rem; margin-top: 8px; line-height: 1.4; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip {
+      font-size: .72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #0f1724;
+      border: 1px solid #243044;
+      color: var(--muted);
+    }
+    .chip.ok { color: var(--ok); border-color: #14532d; }
+    .chip.bad { color: var(--bad); border-color: #7f1d1d; }
+    .chip.warn { color: var(--warn); border-color: #854d0e; }
+    table.avail {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+    table.avail th, table.avail td {
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid #1e293b;
+    }
+    table.avail th { color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+    .compass {
+      width: 160px; height: 160px; margin: 8px auto 0;
+      position: relative;
+    }
+    .compass canvas { width: 100%; height: 100%; }
+    .log {
+      max-height: 160px;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .72rem;
+      color: #9fb0c7;
+      background: #080c14;
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid #1b2535;
+      white-space: pre-wrap;
+    }
+    .bar {
+      height: 8px; border-radius: 99px; background: #1e293b; overflow: hidden; margin-top: 6px;
+    }
+    .bar > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .hint { max-width: 1400px; margin: 0 auto 14px; color: var(--muted); font-size: .86rem; }
+    a { color: var(--accent2); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Live <span>Sensor</span> Dashboard</h1>
+      <div class="sub">Browser-exposed sensors only — camera, mic, motion, orientation, GPS, light, battery, network, and more.</div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnStart">Enable sensors</button>
+      <button id="btnMotion">Motion / gyro permission</button>
+      <button id="btnCam">Camera + mic</button>
+      <button id="btnGeo">Location</button>
+      <button class="danger" id="btnStop">Stop streams</button>
+    </div>
+  </header>
+  <p class="hint">
+    Open this file on a phone for the richest data (accelerometer, gyroscope, compass, GPS altitude).
+    Desktop browsers usually expose camera, microphone, battery, and network. Ambient temperature is not a standard Web API.
+  </p>
+
+  <div class="grid">
+    <section class="card wide">
+      <h2><span class="dot" id="dotCam"></span> Camera</h2>
+      <div class="video-wrap">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="camCanvas"></canvas>
+      </div>
+      <div class="values" style="margin-top:10px">
+        <div class="metric"><div class="k">Resolution</div><div class="v sky" id="camRes">—</div></div>
+        <div class="metric"><div class="k">FPS (est.)</div><div class="v teal" id="camFps">—</div></div>
+        <div class="metric"><div class="k">Brightness</div><div class="v gold" id="camBright">—</div></div>
+        <div class="metric"><div class="k">Facing</div><div class="v" id="camFacing">—</div></div>
+      </div>
+      <div class="actions" style="margin-top:8px">
+        <button id="btnFlip">Flip camera</button>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="dot" id="dotMic"></span> Microphone</h2>
+      <canvas class="chart" id="wave"></canvas>
+      <canvas class="chart" id="spec" style="margin-top:8px;height:110px"></canvas>
+      <div class="values" style="margin-top:10px">
+        <div class="metric"><div class="k">RMS level</div><div class="v pink" id="micRms">—</div></div>
+        <div class="metric"><div class="k">Peak</div><div class="v gold" id="micPeak">—</div></div>
+        <div class="metric"><div class="k">Dominant Hz</div><div class="v teal" id="micHz">—</div></div>
+        <div class="metric"><div class="k">Sample rate</div><div class="v" id="micRate">—</div></div>
+      </div>
+      <div class="bar"><i id="micBar"></i></div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="dot" id="dotAccel"></span> Accelerometer (m/s²)</h2>
+      <div class="values">
+        <div class="metric"><div class="k">X</div><div class="v pink" id="ax">—</div></div>
+        <div class="metric"><div class="k">Y</div><div class="v teal" id="ay">—</div></div>
+        <div class="metric"><div class="k">Z</div><div class="v sky" id="az">—</div></div>
+        <div class="metric"><div class="k">|g| / mag</div><div class="v gold" id="amag">—</div></div>
+      </div>
+      <canvas class="chart" id="accelChart"></canvas>
+      <p class="note">Includes gravity unless linear acceleration is available separately.</p>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="dot" id="dotGyro"></span> Gyroscope (deg/s) + linear accel</h2>
+      <div class="values">
+        <div class="metric"><div class="k">α / X</div><div class="v pink" id="gx">—</div></div>
+        <div class="metric"><div class="k">β / Y</div><div class="v teal" id="gy">—</div></div>
+        <div class="metric"><div class="k">γ / Z</div><div class="v sky" id="gz">—</div></div>
+        <div class="metric"><div class="k">Interval</div><div class="v" id="gint">—</div></div>
+      </div>
+      <canvas class="chart" id="gyroChart"></canvas>
+      <div class="values" style="margin-top:10px">
+        <div class="metric"><div class="k">Lin X</div><div class="v pink" id="lx">—</div></div>
+        <div class="metric"><div class="k">Lin Y</div><div class="v teal" id="ly">—</div></div>
+        <div class="metric"><div class="k">Lin Z</div><div class="v sky" id="lz">—</div></div>
+      </div>
+    </section>
+
+    <section class="card third">
+      <h2><span class="dot" id="dotOri"></span> Orientation / compass</h2>
+      <div class="values">
+        <div class="metric"><div class="k">Alpha (compass)</div><div class="v gold" id="oa">—</div></div>
+        <div class="metric"><div class="k">Beta (front-back)</div><div class="v teal" id="ob">—</div></div>
+        <div class="metric"><div class="k">Gamma (left-right)</div><div class="v pink" id="og">—</div></div>
+        <div class="metric"><div class="k">Abs. compass</div><div class="v" id="oabs">—</div></div>
+      </div>
+      <div class="compass"><canvas id="compass" width="320" height="320"></canvas></div>
+    </section>
+
+    <section class="card third">
+      <h2><span class="dot" id="dotGeo"></span> GPS / altitude / speed</h2>
+      <div class="values">
+        <div class="metric"><div class="k">Latitude</div><div class="v teal" id="lat">—</div></div>
+        <div class="metric"><div class="k">Longitude</div><div class="v sky" id="lon">—</div></div>
+        <div class="metric"><div class="k">Altitude (m)</div><div class="v gold" id="alt">—</div></div>
+        <div class="metric"><div class="k">Alt accuracy</div><div class="v" id="altAcc">—</div></div>
+        <div class="metric"><div class="k">Speed (m/s)</div><div class="v pink" id="spd">—</div></div>
+        <div class="metric"><div class="k">Heading</div><div class="v" id="hdg">—</div></div>
+        <div class="metric"><div class="k">Accuracy (m)</div><div class="v" id="acc">—</div></div>
+        <div class="metric"><div class="k">Updated</div><div class="v" id="geoAge">—</div></div>
+      </div>
+      <canvas class="chart" id="altChart" style="height:100px"></canvas>
+    </section>
+
+    <section class="card third">
+      <h2><span class="dot" id="dotEnv"></span> Environment & device</h2>
+      <div class="values">
+        <div class="metric"><div class="k">Ambient light</div><div class="v gold" id="lux">—</div></div>
+        <div class="metric"><div class="k">Temperature</div><div class="v pink" id="temp">Not in Web API</div></div>
+        <div class="metric"><div class="k">Pressure / baro</div><div class="v" id="pres">—</div></div>
+        <div class="metric"><div class="k">Relative altitude</div><div class="v teal" id="ralt">—</div></div>
+        <div class="metric"><div class="k">Proximity</div><div class="v" id="prox">—</div></div>
+        <div class="metric"><div class="k">Magnetometer</div><div class="v violet" id="mag">—</div></div>
+        <div class="metric"><div class="k">Battery</div><div class="v gold" id="bat">—</div></div>
+        <div class="metric"><div class="k">Charging</div><div class="v" id="chg">—</div></div>
+        <div class="metric"><div class="k">Network</div><div class="v sky" id="net">—</div></div>
+        <div class="metric"><div class="k">Downlink</div><div class="v" id="down">—</div></div>
+      </div>
+      <div class="bar"><i id="batBar"></i></div>
+    </section>
+
+    <section class="card quarter">
+      <h2><span class="dot on"></span> Pointer / touch</h2>
+      <div class="values">
+        <div class="metric"><div class="k">X</div><div class="v teal" id="px">—</div></div>
+        <div class="metric"><div class="k">Y</div><div class="v sky" id="py">—</div></div>
+        <div class="metric"><div class="k">Pressure</div><div class="v gold" id="pp">—</div></div>
+        <div class="metric"><div class="k">Tilt / twist</div><div class="v" id="pt">—</div></div>
+        <div class="metric"><div class="k">Type</div><div class="v" id="ptype">—</div></div>
+        <div class="metric"><div class="k">Touches</div><div class="v pink" id="ptn">0</div></div>
+      </div>
+    </section>
+
+    <section class="card quarter">
+      <h2><span class="dot on"></span> Screen & hardware</h2>
+      <div class="values">
+        <div class="metric"><div class="k">Viewport</div><div class="v" id="vp">—</div></div>
+        <div class="metric"><div class="k">DPR</div><div class="v teal" id="dpr">—</div></div>
+        <div class="metric"><div class="k">Orientation</div><div class="v" id="sori">—</div></div>
+        <div class="metric"><div class="k">Cores</div><div class="v gold" id="cores">—</div></div>
+        <div class="metric"><div class="k">Device memory</div><div class="v" id="mem">—</div></div>
+        <div class="metric"><div class="k">Max touch</div><div class="v" id="mtouch">—</div></div>
+        <div class="metric"><div class="k">Platform</div><div class="v" id="plat">—</div></div>
+        <div class="metric"><div class="k">Online</div><div class="v" id="onl">—</div></div>
+      </div>
+    </section>
+
+    <section class="card quarter">
+      <h2><span class="dot" id="dotPad"></span> Gamepad</h2>
+      <div id="pads" class="note">No gamepad connected. Press a button on a controller.</div>
+    </section>
+
+    <section class="card quarter">
+      <h2><span class="dot on"></span> Time & motion extras</h2>
+      <div class="values">
+        <div class="metric"><div class="k">Local time</div><div class="v teal" id="now">—</div></div>
+        <div class="metric"><div class="k">Timezone</div><div class="v" id="tz">—</div></div>
+        <div class="metric"><div class="k">Visibility</div><div class="v" id="vis">—</div></div>
+        <div class="metric"><div class="k">DeviceMotion Hz</div><div class="v gold" id="dmhz">—</div></div>
+      </div>
+      <p class="note">Vibrate test: <button id="btnVibe">Pulse</button></p>
+    </section>
+
+    <section class="card full">
+      <h2>API availability on this browser</h2>
+      <table class="avail" id="availTable">
+        <thead><tr><th>Sensor / API</th><th>Supported</th><th>Permission / state</th><th>Notes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card full">
+      <h2>Event log</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const logEl = $('log');
+  const log = (msg) => {
+    const t = new Date().toLocaleTimeString();
+    logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent.slice(0, 4000);
+  };
+
+  const setDot = (id, state) => {
+    const el = $(id);
+    if (!el) return;
+    el.className = 'dot ' + (state === true ? 'on' : state === 'warn' ? 'warn' : 'off');
+  };
+  const fmt = (n, d=2) => (n == null || Number.isNaN(n) ? '—' : Number(n).toFixed(d));
+
+  /* ---------- scrolling sparkline ---------- */
+  class Spark {
+    constructor(canvas, series, yMin, yMax, auto=true) {
+      this.c = canvas;
+      this.ctx = canvas.getContext('2d');
+      this.series = series; // [{name,color,data:[]}]
+      this.yMin = yMin; this.yMax = yMax; this.auto = auto;
+      this.n = 180;
+      this.series.forEach(s => { s.data = new Array(this.n).fill(null); });
+    }
+    push(values) {
+      this.series.forEach((s,i) => {
+        s.data.push(values[i]);
+        if (s.data.length > this.n) s.data.shift();
+      });
+    }
+    draw() {
+      const ctx = this.ctx, c = this.c;
+      const w = c.width = c.clientWidth * devicePixelRatio;
+      const h = c.height = c.clientHeight * devicePixelRatio;
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#0a0f18';
+      ctx.fillRect(0,0,w,h);
+      let min = this.yMin, max = this.yMax;
+      if (this.auto) {
+        const all = this.series.flatMap(s => s.data.filter(v => v != null));
+        if (all.length) {
+          min = Math.min(...all); max = Math.max(...all);
+          if (min === max) { min -= 1; max += 1; }
+          const pad = (max-min)*0.12 || 0.5;
+          min -= pad; max += pad;
+        }
+      }
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let i=1;i<4;i++) {
+        const y = h*i/4;
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      }
+      this.series.forEach(s => {
+        ctx.beginPath();
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2 * devicePixelRatio * 0.6;
+        let started = false;
+        s.data.forEach((v,i) => {
+          if (v == null) return;
+          const x = (i/(this.n-1)) * w;
+          const y = h - ((v-min)/(max-min)) * h;
+          if (!started) { ctx.moveTo(x,y); started = true; }
+          else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+      });
+      ctx.font = `${11*devicePixelRatio}px ui-sans-serif`;
+      ctx.fillStyle = '#8b98ad';
+      ctx.fillText(max.toFixed(1), 6, 14*devicePixelRatio);
+      ctx.fillText(min.toFixed(1), 6, h-8);
+    }
+  }
+
+  const accelChart = new Spark($('accelChart'), [
+    {name:'x', color:'#f472b6'},
+    {name:'y', color:'#5eead4'},
+    {name:'z', color:'#38bdf8'},
+  ], -20, 20, true);
+  const gyroChart = new Spark($('gyroChart'), [
+    {name:'x', color:'#f472b6'},
+    {name:'y', color:'#5eead4'},
+    {name:'z', color:'#38bdf8'},
+  ], -400, 400, true);
+  const altChart = new Spark($('altChart'), [
+    {name:'alt', color:'#fbbf24'},
+  ], 0, 1000, true);
+
+  /* ---------- availability table ---------- */
+  const rows = [];
+  const addRow = (name, supported, state, notes) => {
+    rows.push({name, supported, state, notes});
+  };
+  const renderTable = () => {
+    const tb = $('availTable').querySelector('tbody');
+    tb.innerHTML = rows.map(r => `<tr>
+      <td>${r.name}</td>
+      <td>${r.supported ? '<span class="chip ok">yes</span>' : '<span class="chip bad">no</span>'}</td>
+      <td>${r.state || '—'}</td>
+      <td>${r.notes || ''}</td>
+    </tr>`).join('');
+  };
+
+  const has = (path) => {
+    try { return path.split('.').reduce((o,k)=>o && o[k], window) != null || path.split('.').reduce((o,k)=>o && o[k], navigator) != null; }
+    catch { return false; }
+  };
+
+  addRow('MediaDevices.getUserMedia (camera/mic)', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), 'needs gesture', 'User must tap Enable');
+  addRow('DeviceMotionEvent', 'DeviceMotionEvent' in window, DeviceMotionEvent.requestPermission ? 'iOS permission required' : 'event listener');
+  addRow('DeviceOrientationEvent', 'DeviceOrientationEvent' in window, DeviceOrientationEvent.requestPermission ? 'iOS permission required' : 'event listener');
+  addRow('Accelerometer (Generic Sensor)', 'Accelerometer' in window, 'secure context + permission');
+  addRow('Gyroscope (Generic Sensor)', 'Gyroscope' in window, 'secure context + permission');
+  addRow('LinearAccelerationSensor', 'LinearAccelerationSensor' in window, 'secure context + permission');
+  addRow('AbsoluteOrientationSensor', 'AbsoluteOrientationSensor' in window, 'secure context + permission');
+  addRow('RelativeOrientationSensor', 'RelativeOrientationSensor' in window, 'secure context + permission');
+  addRow('GravitySensor', 'GravitySensor' in window, 'secure context + permission');
+  addRow('Magnetometer', 'Magnetometer' in window, 'secure context + permission');
+  addRow('AmbientLightSensor', 'AmbientLightSensor' in window, 'secure context + permission');
+  addRow('ProximitySensor', 'ProximitySensor' in window, 'rare / deprecated');
+  addRow('Geolocation', 'geolocation' in navigator, 'permission prompt');
+  addRow('Barometer / Pressure', 'BarometerSensor' in window || 'PressureSensor' in window, 'not standard');
+  addRow('Ambient temperature', false, 'unavailable', 'No standard Web API exposes ambient/CPU temperature');
+  addRow('Battery Status', 'getBattery' in navigator || 'battery' in navigator, 'removed in some browsers');
+  addRow('Network Information', !!(navigator.connection || navigator.mozConnection || navigator.webkitConnection));
+  addRow('Gamepad', 'getGamepads' in navigator);
+  addRow('Vibration', 'vibrate' in navigator);
+  addRow('Screen Orientation', !!(screen.orientation || window.orientation));
+  addRow('Device Memory', 'deviceMemory' in navigator);
+  addRow('Hardware concurrency', 'hardwareConcurrency' in navigator);
+  addRow('Pointer Events', 'PointerEvent' in window);
+  renderTable();
+
+  $('temp').textContent = 'Not exposed';
+
+  /* ---------- hardware statics ---------- */
+  $('vp').textContent = `${innerWidth}×${innerHeight}`;
+  $('dpr').textContent = devicePixelRatio;
+  $('cores').textContent = navigator.hardwareConcurrency ?? '—';
+  $('mem').textContent = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '—';
+  $('mtouch').textContent = navigator.maxTouchPoints ?? '—';
+  $('plat').textContent = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '—';
+  $('tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const oriText = () => (screen.orientation && screen.orientation.type) || (innerWidth>innerHeight?'landscape':'portrait');
+  $('sori').textContent = oriText();
+  $('onl').textContent = navigator.onLine ? 'online' : 'offline';
+  $('vis').textContent = document.visibilityState;
+  window.addEventListener('resize', () => { $('vp').textContent = `${innerWidth}×${innerHeight}`; $('sori').textContent = oriText(); });
+  window.addEventListener('orientationchange', () => $('sori').textContent = oriText());
+  document.addEventListener('visibilitychange', () => $('vis').textContent = document.visibilityState);
+  window.addEventListener('online', () => $('onl').textContent = 'online');
+  window.addEventListener('offline', () => $('onl').textContent = 'offline');
+
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const updateNet = () => {
+    if (!conn) { $('net').textContent = 'API missing'; return; }
+    $('net').textContent = [conn.effectiveType, conn.type].filter(Boolean).join(' / ') || '—';
+    $('down').textContent = conn.downlink != null ? conn.downlink + ' Mb/s' : '—';
+  };
+  updateNet();
+  if (conn) conn.addEventListener('change', updateNet);
+
+  /* ---------- battery ---------- */
+  async function battery() {
+    try {
+      const b = await (navigator.getBattery ? navigator.getBattery() : navigator.battery);
+      if (!b) { $('bat').textContent = 'API missing'; setDot('dotEnv','warn'); return; }
+      const upd = () => {
+        $('bat').textContent = Math.round(b.level*100) + '%';
+        $('chg').textContent = b.charging ? `yes (${fmt(b.chargingTime,0)}s)` : `no (${fmt(b.dischargingTime,0)}s)`;
+        $('batBar').style.width = (b.level*100) + '%';
+      };
+      upd();
+      b.addEventListener('levelchange', upd);
+      b.addEventListener('chargingchange', upd);
+    } catch(e) { $('bat').textContent = 'blocked'; log('Battery: '+e.message); }
+  }
+  battery();
+
+  /* ---------- pointer ---------- */
+  const onPtr = (e) => {
+    $('px').textContent = Math.round(e.clientX);
+    $('py').textContent = Math.round(e.clientY);
+    $('pp').textContent = e.pressure != null ? e.pressure.toFixed(3) : '—';
+    $('pt').textContent = `${fmt(e.tiltX,0)}/${fmt(e.tiltY,0)}/${fmt(e.twist,0)}`;
+    $('ptype').textContent = e.pointerType || e.type;
+  };
+  window.addEventListener('pointermove', onPtr, {passive:true});
+  window.addEventListener('pointerdown', onPtr);
+  window.addEventListener('touchstart', e => $('ptn').textContent = e.touches.length, {passive:true});
+  window.addEventListener('touchend', e => $('ptn').textContent = e.touches.length);
+  window.addEventListener('touchmove', e => $('ptn').textContent = e.touches.length, {passive:true});
+
+  /* ---------- gamepads ---------- */
+  const padsEl = $('pads');
+  const pollPads = () => {
+    const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+    setDot('dotPad', pads.length>0);
+    if (!pads.length) return;
+    padsEl.innerHTML = pads.map(p => {
+      const axes = [...p.axes].map(a => fmt(a,2)).join(', ');
+      const pressed = [...p.buttons].map((b,i)=> b.pressed?i:null).filter(v=>v!=null).join(',') || 'none';
+      return `<div class="note"><b>${p.id}</b><br>axes: ${axes}<br>pressed: ${pressed}</div>`;
+    }).join('');
+  };
+  window.addEventListener('gamepadconnected', e => { log('Gamepad: '+e.gamepad.id); setDot('dotPad', true); });
+
+  /* ---------- compass drawing ---------- */
+  const compass = $('compass');
+  const cctx = compass.getContext('2d');
+  let heading = 0;
+  function drawCompass(deg) {
+    heading = deg;
+    const w = compass.width, h = compass.height, r = w*0.42, cx=w/2, cy=h/2;
+    cctx.clearRect(0,0,w,h);
+    cctx.save();
+    cctx.translate(cx,cy);
+    cctx.beginPath();
+    cctx.arc(0,0,r,0,Math.PI*2);
+    cctx.fillStyle = '#0a0f18';
+    cctx.fill();
+    cctx.strokeStyle = '#334155';
+    cctx.lineWidth = 6;
+    cctx.stroke();
+    cctx.rotate(-deg * Math.PI/180);
+    for (let i=0;i<36;i++) {
+      cctx.save();
+      cctx.rotate(i*10*Math.PI/180);
+      cctx.beginPath();
+      cctx.moveTo(0,-r+8);
+      cctx.lineTo(0, i%9===0 ? -r+28 : -r+16);
+      cctx.strokeStyle = i===0 ? '#f87171' : '#64748b';
+      cctx.lineWidth = i%9===0 ? 4 : 2;
+      cctx.stroke();
+      cctx.restore();
+    }
+    cctx.fillStyle = '#f87171';
+    cctx.beginPath();
+    cctx.moveTo(0,-r+36); cctx.lineTo(10,-10); cctx.lineTo(-10,-10); cctx.closePath(); cctx.fill();
+    cctx.fillStyle = '#94a3b8';
+    cctx.beginPath();
+    cctx.moveTo(0,r-36); cctx.lineTo(10,10); cctx.lineTo(-10,10); cctx.closePath(); cctx.fill();
+    cctx.restore();
+    cctx.fillStyle = '#e8eef8';
+    cctx.font = '28px ui-sans-serif';
+    cctx.textAlign = 'center';
+    cctx.fillText((Math.round(deg)%360) + '°', w/2, h/2+10);
+    cctx.font = '16px ui-sans-serif';
+    cctx.fillStyle = '#f87171';
+    cctx.fillText('N', w/2, 28);
+  }
+  drawCompass(0);
+
+  /* ---------- motion / orientation ---------- */
+  let motionOn = false, lastMotion = 0, motionTicks = 0, motionHz = 0;
+  function handleMotion(e) {
+    motionOn = true;
+    setDot('dotAccel', true);
+    setDot('dotGyro', true);
+    const acc = e.accelerationIncludingGravity || e.acceleration;
+    const lin = e.acceleration;
+    const rot = e.rotationRate;
+    if (acc) {
+      $('ax').textContent = fmt(acc.x);
+      $('ay').textContent = fmt(acc.y);
+      $('az').textContent = fmt(acc.z);
+      const mag = Math.hypot(acc.x||0, acc.y||0, acc.z||0);
+      $('amag').textContent = fmt(mag);
+      accelChart.push([acc.x, acc.y, acc.z]);
+    }
+    if (lin) {
+      $('lx').textContent = fmt(lin.x);
+      $('ly').textContent = fmt(lin.y);
+      $('lz').textContent = fmt(lin.z);
+    }
+    if (rot) {
+      $('gx').textContent = fmt(rot.alpha ?? rot.x);
+      $('gy').textContent = fmt(rot.beta ?? rot.y);
+      $('gz').textContent = fmt(rot.gamma ?? rot.z);
+      gyroChart.push([rot.alpha ?? rot.x, rot.beta ?? rot.y, rot.gamma ?? rot.z]);
+    }
+    $('gint').textContent = e.interval != null ? e.interval + ' ms' : '—';
+    motionTicks++;
+    const now = performance.now();
+    if (now - lastMotion > 1000) {
+      motionHz = motionTicks * 1000 / (now - lastMotion || 1);
+      $('dmhz').textContent = fmt(motionHz,1);
+      motionTicks = 0; lastMotion = now;
+    }
+  }
+  function handleOrient(e) {
+    setDot('dotOri', true);
+    $('oa').textContent = fmt(e.alpha,1) + '°';
+    $('ob').textContent = fmt(e.beta,1) + '°';
+    $('og').textContent = fmt(e.gamma,1) + '°';
+    $('oabs').textContent = e.absolute ? 'absolute' : 'relative';
+    if (e.alpha != null) drawCompass(e.alpha);
+  }
+  window.addEventListener('devicemotion', handleMotion);
+  window.addEventListener('deviceorientation', handleOrient);
+  window.addEventListener('deviceorientationabsolute', (e) => {
+    handleOrient(e);
+    $('oabs').textContent = 'absolute event';
+  });
+
+  async function requestMotionPerm() {
+    try {
+      if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) {
+        const s = await DeviceMotionEvent.requestPermission();
+        log('DeviceMotion permission: ' + s);
+      }
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        const s = await DeviceOrientationEvent.requestPermission();
+        log('DeviceOrientation permission: ' + s);
+      }
+    } catch (e) { log('Motion permission error: ' + e.message); }
+  }
+
+  /* ---------- generic sensors ---------- */
+  function startGeneric(name, Ctor, opts, onreading, targetId) {
+    if (!(name in window)) return;
+    try {
+      const s = new window[name](opts || { frequency: 30 });
+      s.addEventListener('reading', () => onreading(s));
+      s.addEventListener('error', (e) => log(name + ' error: ' + (e.error && e.error.name)));
+      s.start();
+      log(name + ' started');
+      return s;
+    } catch (e) {
+      log(name + ' failed: ' + e.message);
+    }
+  }
+  function startGenerics() {
+    startGeneric('Accelerometer', null, {frequency:50}, (s) => {
+      setDot('dotAccel', true);
+      $('ax').textContent = fmt(s.x); $('ay').textContent = fmt(s.y); $('az').textContent = fmt(s.z);
+      $('amag').textContent = fmt(Math.hypot(s.x,s.y,s.z));
+      accelChart.push([s.x,s.y,s.z]);
+    });
+    startGeneric('Gyroscope', null, {frequency:50}, (s) => {
+      setDot('dotGyro', true);
+      const rad2deg = 180/Math.PI;
+      $('gx').textContent = fmt(s.x*rad2deg);
+      $('gy').textContent = fmt(s.y*rad2deg);
+      $('gz').textContent = fmt(s.z*rad2deg);
+      gyroChart.push([s.x*rad2deg,s.y*rad2deg,s.z*rad2deg]);
+    });
+    startGeneric('LinearAccelerationSensor', null, {frequency:50}, (s) => {
+      $('lx').textContent = fmt(s.x); $('ly').textContent = fmt(s.y); $('lz').textContent = fmt(s.z);
+    });
+    startGeneric('AmbientLightSensor', null, {frequency:10}, (s) => {
+      setDot('dotEnv', true);
+      $('lux').textContent = fmt(s.illuminance,0) + ' lux';
+    });
+    startGeneric('Magnetometer', null, {frequency:20}, (s) => {
+      $('mag').textContent = `${fmt(s.x,1)}, ${fmt(s.y,1)}, ${fmt(s.z,1)} µT`;
+    });
+    startGeneric('ProximitySensor', null, {frequency:5}, (s) => {
+      $('prox').textContent = `${fmt(s.distance,1)} ${s.near ? '(near)' : ''}`;
+    });
+    ['BarometerSensor','PressureSensor'].forEach(n => {
+      startGeneric(n, null, {frequency:5}, (s) => {
+        $('pres').textContent = fmt(s.pressure ?? s.value,1) + ' hPa';
+      });
+    });
+    if ('RelativeAltitudeSensor' in window) {
+      startGeneric('RelativeAltitudeSensor', null, {frequency:5}, (s) => {
+        $('ralt').textContent = fmt(s.altitude ?? s.height,2) + ' m';
+      });
+    }
+  }
+
+  /* ---------- geolocation ---------- */
+  let geoWatch = null;
+  function startGeo() {
+    if (!navigator.geolocation) { $('lat').textContent = 'no API'; setDot('dotGeo', false); return; }
+    if (geoWatch != null) navigator.geolocation.clearWatch(geoWatch);
+    geoWatch = navigator.geolocation.watchPosition((pos) => {
+      setDot('dotGeo', true);
+      const c = pos.coords;
+      $('lat').textContent = c.latitude.toFixed(6);
+      $('lon').textContent = c.longitude.toFixed(6);
+      $('alt').textContent = c.altitude == null ? 'null' : fmt(c.altitude,1);
+      $('altAcc').textContent = c.altitudeAccuracy == null ? '—' : fmt(c.altitudeAccuracy,1);
+      $('spd').textContent = c.speed == null ? '—' : fmt(c.speed,2);
+      $('hdg').textContent = c.heading == null ? '—' : fmt(c.heading,0) + '°';
+      $('acc').textContent = fmt(c.accuracy,1);
+      $('geoAge').textContent = new Date(pos.timestamp).toLocaleTimeString();
+      if (c.altitude != null) altChart.push([c.altitude]);
+    }, (err) => {
+      setDot('dotGeo', false);
+      log('Geolocation: ' + err.message);
+      $('lat').textContent = err.message;
+    }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
+  }
+
+  /* ---------- camera + mic ---------- */
+  let stream = null, audioCtx = null, analyser = null, timeData = null, freqData = null;
+  let useFront = false, camRaf = 0, lastCamT = 0, camFrames = 0;
+  const video = $('video');
+  const camCanvas = $('camCanvas');
+  const camCtx = camCanvas.getContext('2d', { willReadFrequently: true });
+
+  async function startMedia() {
+    try {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: useFront ? 'user' : { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      video.srcObject = stream;
+      const vtrack = stream.getVideoTracks()[0];
+      const settings = vtrack ? vtrack.getSettings() : {};
+      $('camRes').textContent = `${settings.width||'?'}×${settings.height||'?'}`;
+      $('camFacing').textContent = settings.facingMode || (useFront ? 'user' : 'environment');
+      setDot('dotCam', !!vtrack);
+
+      const atrack = stream.getAudioTracks()[0];
+      setDot('dotMic', !!atrack);
+      if (atrack) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.7;
+        src.connect(analyser);
+        timeData = new Uint8Array(analyser.fftSize);
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        $('micRate').textContent = audioCtx.sampleRate + ' Hz';
+      }
+      log('Camera/mic started');
+    } catch (e) {
+      setDot('dotCam', false); setDot('dotMic', false);
+      log('Media error: ' + e.name + ' ' + e.message);
+    }
+  }
+
+  function stopMedia() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    video.srcObject = null;
+    if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
+    setDot('dotCam', false); setDot('dotMic', false);
+    log('Streams stopped');
+  }
+
+  function drawMic() {
+    const wave = $('wave'), spec = $('spec');
+    if (!analyser) {
+      [wave, spec].forEach(cv => {
+        const ctx = cv.getContext('2d');
+        cv.width = cv.clientWidth * devicePixelRatio;
+        cv.height = cv.clientHeight * devicePixelRatio;
+        ctx.fillStyle = '#0a0f18';
+        ctx.fillRect(0,0,cv.width,cv.height);
+      });
+      return;
+    }
+    analyser.getByteTimeDomainData(timeData);
+    analyser.getByteFrequencyData(freqData);
+
+    const wctx = wave.getContext('2d');
+    const W = wave.width = wave.clientWidth * devicePixelRatio;
+    const H = wave.height = wave.clientHeight * devicePixelRatio;
+    wctx.fillStyle = '#0a0f18';
+    wctx.fillRect(0,0,W,H);
+    wctx.beginPath();
+    wctx.strokeStyle = '#f472b6';
+    wctx.lineWidth = 2;
+    const step = Math.max(1, Math.floor(timeData.length / W));
+    for (let i=0,x=0;i<timeData.length;i+=step,x++) {
+      const v = timeData[i]/128.0;
+      const y = v * H/2;
+      if (x===0) wctx.moveTo(x,y); else wctx.lineTo(x,y);
+    }
+    wctx.stroke();
+
+    const sctx = spec.getContext('2d');
+    const SW = spec.width = spec.clientWidth * devicePixelRatio;
+    const SH = spec.height = spec.clientHeight * devicePixelRatio;
+    sctx.fillStyle = '#0a0f18';
+    sctx.fillRect(0,0,SW,SH);
+    const bars = Math.min(128, freqData.length);
+    const bw = SW / bars;
+    let peakBin = 0, peakVal = 0, sum=0, sumSq=0;
+    for (let i=0;i<bars;i++) {
+      const v = freqData[i];
+      if (v > peakVal) { peakVal = v; peakBin = i; }
+      const bh = (v/255) * SH;
+      const hue = 180 + (i/bars)*140;
+      sctx.fillStyle = `hsl(${hue} 80% 60%)`;
+      sctx.fillRect(i*bw, SH-bh, Math.max(1,bw-1), bh);
+    }
+    for (let i=0;i<timeData.length;i++) {
+      const n = (timeData[i]-128)/128;
+      sum += n; sumSq += n*n;
+    }
+    const rms = Math.sqrt(sumSq/timeData.length);
+    const peak = Math.max(...timeData)/128-1;
+    $('micRms').textContent = fmt(rms,3);
+    $('micPeak').textContent = fmt(Math.abs(peak),3);
+    $('micBar').style.width = Math.min(100, rms*250) + '%';
+    const hz = peakBin * (audioCtx.sampleRate/2) / analyser.frequencyBinCount;
+    $('micHz').textContent = Math.round(hz) + ' Hz';
+  }
+
+  function sampleCamera() {
+    if (!video.videoWidth) return;
+    const w = 80, h = 45;
+    camCanvas.width = video.clientWidth;
+    camCanvas.height = video.clientHeight;
+    // brightness sample on tiny offscreen
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const octx = off.getContext('2d', { willReadFrequently: true });
+    octx.drawImage(video, 0, 0, w, h);
+    const img = octx.getImageData(0,0,w,h).data;
+    let s = 0;
+    for (let i=0;i<img.length;i+=4) s += (img[i]+img[i+1]+img[i+2])/3;
+    const bright = s / (img.length/4);
+    $('camBright').textContent = fmt(bright,0);
+    camFrames++;
+    const now = performance.now();
+    if (now - lastCamT > 1000) {
+      $('camFps').textContent = fmt(camFrames * 1000 / (now-lastCamT),1);
+      camFrames = 0; lastCamT = now;
+    }
+  }
+
+  function loop() {
+    drawMic();
+    sampleCamera();
+    accelChart.draw();
+    gyroChart.draw();
+    altChart.draw();
+    pollPads();
+    $('now').textContent = new Date().toLocaleTimeString();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  $('btnVibe').addEventListener('click', () => {
+    if (navigator.vibrate) navigator.vibrate([40,40,80]);
+    else log('Vibration API missing');
+  });
+  $('btnStart').addEventListener('click', async () => {
+    await requestMotionPerm();
+    startGenerics();
+    await startMedia();
+    startGeo();
+  });
+  $('btnMotion').addEventListener('click', requestMotionPerm);
+  $('btnCam').addEventListener('click', startMedia);
+  $('btnGeo').addEventListener('click', startGeo);
+  $('btnStop').addEventListener('click', stopMedia);
+  $('btnFlip').addEventListener('click', async () => { useFront = !useFront; await startMedia(); });
+
+  // HTTPS / file note
+  if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    log('Warning: many sensors require HTTPS or localhost.');
+  }
+  log('Dashboard ready. Tap Enable sensors (on iPhone also tap Motion / gyro permission).');
+})();
+</script>
+</body>
+</html>

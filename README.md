@@ -9,6 +9,10 @@ collected yourself, in fourteen weeks, without skipping the mathematics in betwe
 
 Everything runs in a browser. There is nothing to install.
 
+**In-class tools and demos:** [QR Code Maker](https://williamedwardhahn.github.io/web/qr.html) ·
+[Boca tide map](boca_tide_map.html) · [Sensor dashboard](sensor-dashboard.html) ·
+[Show an image from a URL](Show_Image_from_URL.ipynb)
+
 ---
 
 ## Start here
